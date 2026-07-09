@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +29,53 @@ import {
   uid,
 } from '../lib/storage';
 import { useIosPWAKeyboard } from '../lib/useIosPWAKeyboard';
+
+// The hero card's big button: a bean waiting in a dashed slot, gently
+// pulsing until it's tapped, then a solid green check.
+function HeroCheck({ done, onPress }: { done: boolean; onPress: () => void }) {
+  const pulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (done) {
+      pulse.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1.08,
+          duration: 900,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [done, pulse]);
+
+  return (
+    <Pressable onPress={onPress}>
+      <Animated.View
+        style={[
+          s.heroCheck,
+          done && s.heroCheckOn,
+          { transform: [{ scale: pulse }] },
+        ]}
+      >
+        <Text style={done ? s.heroCheckMark : s.heroCheckBean}>
+          {done ? '✓' : '🫘'}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function HabitsScreen() {
   const insets = useSafeAreaInsets();
@@ -224,14 +274,9 @@ export default function HabitsScreen() {
                     </View>
                   )}
 
-                  <Pressable
-                    onPress={() => toggleToday(h)}
-                    style={[s.heroCheck, isDone && s.heroCheckOn]}
-                  >
-                    {isDone && <Text style={s.heroCheckMark}>✓</Text>}
-                  </Pressable>
+                  <HeroCheck done={isDone} onPress={() => toggleToday(h)} />
                   <Text style={s.heroCheckLabel}>
-                    {isDone ? 'Done today ✨' : 'Tap when it’s done'}
+                    {isDone ? 'Done today ✨' : 'Tap the bean when it’s done'}
                   </Text>
 
                   <View style={s.heroDots}>
@@ -476,13 +521,20 @@ const s = StyleSheet.create({
     height: 96,
     borderRadius: 48,
     borderWidth: 3,
+    borderStyle: 'dashed',
     borderColor: '#D8D2C8',
+    backgroundColor: '#F7F2E9',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
   },
-  heroCheckOn: { backgroundColor: '#3FA34D', borderColor: '#3FA34D' },
+  heroCheckOn: {
+    backgroundColor: '#3FA34D',
+    borderColor: '#3FA34D',
+    borderStyle: 'solid',
+  },
   heroCheckMark: { color: '#FFFFFF', fontSize: 44, fontFamily: 'Nunito_800ExtraBold' },
+  heroCheckBean: { fontSize: 42 },
   heroCheckLabel: {
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
