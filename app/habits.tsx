@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  bestStreak,
   dayChance,
   Habit,
   lastNDays,
@@ -37,6 +38,8 @@ export default function HabitsScreen() {
   const [editing, setEditing] = useState<Habit | null>(null);
   const [draft, setDraft] = useState('');
   const [draftTreat, setDraftTreat] = useState('');
+  const [draftPair, setDraftPair] = useState('');
+  const [formError, setFormError] = useState('');
   const [celebrating, setCelebrating] = useState<Habit | null>(null);
   const [suggestDismissed, setSuggestDismissed] = useState<string | null>(null);
 
@@ -92,6 +95,8 @@ export default function HabitsScreen() {
     setEditing(null);
     setDraft('');
     setDraftTreat('');
+    setDraftPair('');
+    setFormError('');
     setModalOpen(true);
   };
 
@@ -99,19 +104,31 @@ export default function HabitsScreen() {
     setEditing(habit);
     setDraft(habit.label);
     setDraftTreat(habit.reward ?? '');
+    setDraftPair(habit.pairing ?? '');
+    setFormError('');
     setModalOpen(true);
   };
 
   const saveDraft = () => {
     const label = draft.trim();
-    if (!label) return;
-    const reward = draftTreat.trim() || undefined;
+    if (!label) {
+      setFormError('Give your habit a name.');
+      return;
+    }
+    const reward = draftTreat.trim();
+    if (!reward) {
+      setFormError('Every bean needs a treat — add one!');
+      return;
+    }
+    const pairing = draftPair.trim() || undefined;
     if (editing) {
       update(
-        habits.map((h) => (h.id === editing.id ? { ...h, label, reward } : h))
+        habits.map((h) =>
+          h.id === editing.id ? { ...h, label, reward, pairing } : h
+        )
       );
     } else {
-      update([...habits, { id: uid(), label, reward, done: {} }]);
+      update([...habits, { id: uid(), label, reward, pairing, done: {} }]);
     }
     setModalOpen(false);
   };
@@ -131,6 +148,46 @@ export default function HabitsScreen() {
           ? 'One small bean, every day'
           : `${doneToday} of ${habits.length} beans done today`;
 
+  // One habit gets the full hero treatment; cards simplify as more exist.
+  const tier: 'hero' | 'medium' | 'compact' =
+    habits.length <= 1 ? 'hero' : habits.length <= 3 ? 'medium' : 'compact';
+
+  const renderDots = (h: Habit, dotStyle: object, dotOnStyle: object) => (
+    <>
+      <View style={s.dotsRow}>
+        {days.slice(0, 7).map((d) => (
+          <View key={d} style={[dotStyle, h.done[d] && dotOnStyle]} />
+        ))}
+      </View>
+      <View style={s.dotsRow}>
+        {days.slice(7).map((d) => (
+          <View
+            key={d}
+            style={[dotStyle, h.done[d] && dotOnStyle, d === today && s.dotToday]}
+          />
+        ))}
+      </View>
+    </>
+  );
+
+  const treatPill = (h: Habit) =>
+    h.reward ? (
+      <View style={s.treatPill}>
+        <Text style={s.treatPillText}>🍬 {h.reward}</Text>
+      </View>
+    ) : (
+      <View style={s.treatPillEmpty}>
+        <Text style={s.treatPillEmptyText}>🍬 Add a treat</Text>
+      </View>
+    );
+
+  const pairPill = (h: Habit) =>
+    h.pairing ? (
+      <View style={s.pairPill}>
+        <Text style={s.pairPillText}>🎧 {h.pairing}</Text>
+      </View>
+    ) : null;
+
   return (
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
       <View style={s.content}>
@@ -145,53 +202,116 @@ export default function HabitsScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 24, paddingTop: 16 }}
       >
-        {habits.map((h) => {
-          const isDone = !!h.done[today];
-          const streakCount = streak(h.done);
-          return (
-            <View key={h.id} style={s.card}>
-              <Pressable
-                onPress={() => toggleToday(h)}
-                hitSlop={8}
-                style={[s.check, isDone && s.checkOn]}
-              >
-                {isDone && <Text style={s.checkMark}>✓</Text>}
-              </Pressable>
-              <Pressable style={s.cardBody} onPress={() => openEdit(h)}>
-                <Text style={[s.cardLabel, isDone && s.cardLabelDone]}>
-                  {h.label}
-                </Text>
-                <View style={s.dotsRow}>
-                  {days.slice(0, 7).map((d) => (
-                    <View key={d} style={[s.dot, h.done[d] && s.dotOn]} />
-                  ))}
-                </View>
-                <View style={s.dotsRow}>
-                  {days.slice(7).map((d) => (
-                    <View
-                      key={d}
-                      style={[
-                        s.dot,
-                        h.done[d] && s.dotOn,
-                        d === today && s.dotToday,
-                      ]}
-                    />
-                  ))}
-                </View>
-                {h.reward ? (
-                  <View style={s.treatPill}>
-                    <Text style={s.treatPillText}>🍬 {h.reward}</Text>
+        {tier === 'hero' &&
+          habits.map((h) => {
+            const isDone = !!h.done[today];
+            const streakCount = streak(h.done);
+            const total = Object.keys(h.done).filter((d) => h.done[d]).length;
+            return (
+              <View key={h.id}>
+                <View style={s.heroCard}>
+                  <View style={s.heroTop}>
+                    <View style={{ width: 40 }} />
+                    <Text style={s.heroName}>{h.label}</Text>
+                    <Pressable onPress={() => openEdit(h)} hitSlop={8} style={{ width: 40 }}>
+                      <Text style={s.heroEdit}>Edit</Text>
+                    </Pressable>
                   </View>
-                ) : (
-                  <View style={s.treatPillEmpty}>
-                    <Text style={s.treatPillEmptyText}>🍬 Add a treat</Text>
+
+                  {!!h.pairing && (
+                    <View style={s.pairPill}>
+                      <Text style={s.pairPillText}>🎧 Only with: {h.pairing}</Text>
+                    </View>
+                  )}
+
+                  <Pressable
+                    onPress={() => toggleToday(h)}
+                    style={[s.heroCheck, isDone && s.heroCheckOn]}
+                  >
+                    {isDone && <Text style={s.heroCheckMark}>✓</Text>}
+                  </Pressable>
+                  <Text style={s.heroCheckLabel}>
+                    {isDone ? 'Done today ✨' : 'Tap when it’s done'}
+                  </Text>
+
+                  <View style={s.heroDots}>
+                    {renderDots(h, s.heroDot, s.dotOn)}
                   </View>
-                )}
-              </Pressable>
-              {streakCount > 0 && <Text style={s.streak}>🔥 {streakCount}</Text>}
-            </View>
-          );
-        })}
+
+                  {treatPill(h)}
+                </View>
+
+                <View style={s.statsRow}>
+                  <View style={s.statTile}>
+                    <Text style={s.statNum}>{streakCount}</Text>
+                    <Text style={s.statLabel}>day streak 🔥</Text>
+                  </View>
+                  <View style={s.statTile}>
+                    <Text style={s.statNum}>{bestStreak(h.done)}</Text>
+                    <Text style={s.statLabel}>best streak 🏆</Text>
+                  </View>
+                  <View style={s.statTile}>
+                    <Text style={s.statNum}>{total}</Text>
+                    <Text style={s.statLabel}>days done ✅</Text>
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+
+        {tier === 'medium' &&
+          habits.map((h) => {
+            const isDone = !!h.done[today];
+            const streakCount = streak(h.done);
+            return (
+              <View key={h.id} style={s.card}>
+                <Pressable
+                  onPress={() => toggleToday(h)}
+                  hitSlop={8}
+                  style={[s.check, isDone && s.checkOn]}
+                >
+                  {isDone && <Text style={s.checkMark}>✓</Text>}
+                </Pressable>
+                <Pressable style={s.cardBody} onPress={() => openEdit(h)}>
+                  <Text style={[s.cardLabel, isDone && s.cardLabelDone]}>
+                    {h.label}
+                  </Text>
+                  {renderDots(h, s.dot, s.dotOn)}
+                  <View style={s.pillsRow}>
+                    {treatPill(h)}
+                    {pairPill(h)}
+                  </View>
+                </Pressable>
+                {streakCount > 0 && <Text style={s.streak}>🔥 {streakCount}</Text>}
+              </View>
+            );
+          })}
+
+        {tier === 'compact' &&
+          habits.map((h) => {
+            const isDone = !!h.done[today];
+            const streakCount = streak(h.done);
+            return (
+              <View key={h.id} style={s.cardCompact}>
+                <Pressable
+                  onPress={() => toggleToday(h)}
+                  hitSlop={8}
+                  style={[s.check, isDone && s.checkOn]}
+                >
+                  {isDone && <Text style={s.checkMark}>✓</Text>}
+                </Pressable>
+                <Pressable style={s.cardBody} onPress={() => openEdit(h)}>
+                  <Text style={[s.cardLabel, isDone && s.cardLabelDone]}>
+                    {h.label}
+                  </Text>
+                  {!!h.reward && (
+                    <Text style={s.compactTreat}>🍬 {h.reward}</Text>
+                  )}
+                </Pressable>
+                {streakCount > 0 && <Text style={s.streak}>🔥 {streakCount}</Text>}
+              </View>
+            );
+          })}
 
         {loaded && habits.length === 0 && (
           <View style={s.unlockCard}>
@@ -281,14 +401,26 @@ export default function HabitsScreen() {
                 onChangeText={setDraft}
                 returnKeyType="done"
               />
-              <Text style={s.inputLabel}>Treat / reward for doing it (optional)</Text>
+              <Text style={s.inputLabel}>Treat / reward for doing it</Text>
               <TextInput
                 style={s.input}
                 value={draftTreat}
                 onChangeText={setDraftTreat}
+                returnKeyType="done"
+              />
+              <Text style={s.inputLabel}>Pair it with (optional)</Text>
+              <Text style={s.inputHelper}>
+                One special thing you only enjoy while doing this habit — a
+                podcast, playlist, candle…
+              </Text>
+              <TextInput
+                style={s.input}
+                value={draftPair}
+                onChangeText={setDraftPair}
                 onSubmitEditing={saveDraft}
                 returnKeyType="done"
               />
+              {!!formError && <Text style={s.formError}>{formError}</Text>}
               <Pressable style={s.saveBtn} onPress={saveDraft}>
                 <Text style={s.saveBtnText}>{editing ? 'Save' : 'Add habit'}</Text>
               </Pressable>
@@ -312,6 +444,70 @@ const s = StyleSheet.create({
   title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
   subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#8A8480', marginTop: 4 },
 
+  // ---- hero (single habit) ----
+  heroCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingVertical: 26,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  heroTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+  },
+  heroName: {
+    flex: 1,
+    fontSize: 24,
+    fontFamily: 'Nunito_800ExtraBold',
+    color: '#33302E',
+    textAlign: 'center',
+  },
+  heroEdit: {
+    fontSize: 14,
+    fontFamily: 'Nunito_700Bold',
+    color: '#3FA34D',
+    textAlign: 'right',
+  },
+  heroCheck: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    borderColor: '#D8D2C8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  heroCheckOn: { backgroundColor: '#3FA34D', borderColor: '#3FA34D' },
+  heroCheckMark: { color: '#FFFFFF', fontSize: 44, fontFamily: 'Nunito_800ExtraBold' },
+  heroCheckLabel: {
+    fontSize: 14,
+    fontFamily: 'Nunito_700Bold',
+    color: '#8A8480',
+    marginTop: 10,
+  },
+  heroDots: { alignItems: 'center', marginTop: 16, gap: 2 },
+  heroDot: {
+    width: 13,
+    height: 13,
+    borderRadius: 6.5,
+    backgroundColor: '#EDE7DC',
+  },
+  statsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  statTile: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  statNum: { fontSize: 24, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
+  statLabel: { fontSize: 12, fontFamily: 'Nunito_700Bold', color: '#8A8480', marginTop: 2 },
+
+  // ---- medium (2-3 habits) ----
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -321,6 +517,23 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     marginBottom: 10,
   },
+  // ---- compact (4+ habits) ----
+  cardCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+  },
+  compactTreat: {
+    fontSize: 13,
+    fontFamily: 'Nunito_600SemiBold',
+    color: '#8A6A1F',
+    marginTop: 3,
+  },
+
   check: {
     width: 34,
     height: 34,
@@ -345,6 +558,9 @@ const s = StyleSheet.create({
   },
   dotOn: { backgroundColor: '#3FA34D' },
   dotToday: { borderWidth: 1.5, borderColor: '#33302E' },
+  streak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#E8960C', marginLeft: 8 },
+
+  pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   treatPill: {
     alignSelf: 'flex-start',
     backgroundColor: '#FBEED3',
@@ -365,7 +581,15 @@ const s = StyleSheet.create({
     marginTop: 9,
   },
   treatPillEmptyText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A8480' },
-  streak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#E8960C', marginLeft: 8 },
+  pairPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E4EFF9',
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    marginTop: 9,
+  },
+  pairPillText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#3C6E91' },
 
   unlockCard: {
     backgroundColor: '#FFFFFF',
@@ -463,6 +687,13 @@ const s = StyleSheet.create({
   closeX: { fontSize: 20, color: '#8A8480', fontFamily: 'Nunito_700Bold' },
 
   inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#8A8480', marginBottom: 6 },
+  inputHelper: {
+    fontSize: 13,
+    fontFamily: 'Nunito_600SemiBold',
+    color: '#B8B2AC',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
   input: {
     borderWidth: 1.5,
     borderColor: '#E5DFD5',
@@ -474,6 +705,13 @@ const s = StyleSheet.create({
     color: '#33302E',
     marginBottom: 16,
     minHeight: 48,
+  },
+  formError: {
+    color: '#E23D5B',
+    fontSize: 14,
+    fontFamily: 'Nunito_700Bold',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   saveBtn: {
     backgroundColor: '#3FA34D',

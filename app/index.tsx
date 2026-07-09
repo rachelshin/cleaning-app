@@ -211,6 +211,11 @@ export default function WheelScreen() {
 
   const spin = () => {
     if (spinning || tasks.length === 0) return;
+    // Rewards aren't optional: no spinning until a treat is on the table.
+    if (!treat.trim()) {
+      setManageOpen(true);
+      return;
+    }
     const n = tasks.length;
     const idx = Math.floor(Math.random() * n);
     const per = 360 / n;
@@ -318,7 +323,7 @@ export default function WheelScreen() {
           <Text style={s.treatPillText}>
             {treat.trim()
               ? `🍬 Reward: ${treat.trim()}`
-              : '🍬 Set a reward for finishing'}
+              : '🍬 Set your reward first'}
           </Text>
         </Pressable>
 

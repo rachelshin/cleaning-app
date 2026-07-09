@@ -6,6 +6,9 @@ export type Habit = {
   label: string;
   done: Record<string, boolean>;
   reward?: string;
+  // Temptation bundling: one special thing (podcast, candle, playlist…)
+  // enjoyed ONLY while doing this habit.
+  pairing?: string;
 };
 export type LogEntry = { label: string; date: string };
 
@@ -195,6 +198,25 @@ export function streak(done: Record<string, boolean>): number {
     d.setDate(d.getDate() - 1);
   }
   return count;
+}
+
+// Longest run of consecutive done-days ever. Dates are compared by local
+// component math — never new Date('YYYY-MM-DD'), which parses as UTC.
+export function bestStreak(done: Record<string, boolean>): number {
+  const nextDay = (d: string) => {
+    const [y, m, day] = d.split('-').map(Number);
+    return new Date(y, m - 1, day + 1).toLocaleDateString('en-CA');
+  };
+  const dates = Object.keys(done).filter((d) => done[d]).sort();
+  let best = 0;
+  let run = 0;
+  let prev: string | null = null;
+  for (const d of dates) {
+    run = prev && nextDay(prev) === d ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = d;
+  }
+  return best;
 }
 
 // Local-time date strings for the last n days, oldest first, ending today.
