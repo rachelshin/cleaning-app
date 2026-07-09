@@ -68,11 +68,11 @@ function draw(size) {
     ) {
       return [255, 255, 255];
     }
-    const t = y / size; // vertical teal gradient
+    const t = y / size; // vertical pine gradient
     return [
-      Math.round(22 - 8 * t),
-      Math.round(194 - 51 * t),
-      Math.round(169 - 35 * t),
+      Math.round(78 - 27 * t),
+      Math.round(133 - 37 * t),
+      Math.round(119 - 41 * t),
     ];
   };
 }

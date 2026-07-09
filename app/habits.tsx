@@ -291,7 +291,7 @@ export default function HabitsScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FAF6EF', paddingHorizontal: 20 },
+  screen: { flex: 1, backgroundColor: '#F6F3EE', paddingHorizontal: 20 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontWeight: '800', color: '#33302E' },
   subtitle: { fontSize: 14, color: '#8A8480', marginTop: 4 },
@@ -315,7 +315,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  checkOn: { backgroundColor: '#16B364', borderColor: '#16B364' },
+  checkOn: { backgroundColor: '#3F7561', borderColor: '#3F7561' },
   checkMark: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
   cardBody: { flex: 1 },
   cardLabel: { fontSize: 17, fontWeight: '600', color: '#33302E' },
@@ -327,10 +327,10 @@ const s = StyleSheet.create({
     borderRadius: 4.5,
     backgroundColor: '#EDE7DC',
   },
-  dotOn: { backgroundColor: '#16B364' },
+  dotOn: { backgroundColor: '#3F7561' },
   dotToday: { borderWidth: 1.5, borderColor: '#33302E' },
   cardTreat: { fontSize: 13, color: '#8A8480', marginTop: 7 },
-  streak: { fontSize: 15, fontWeight: '700', color: '#F79009', marginLeft: 8 },
+  streak: { fontSize: 15, fontWeight: '700', color: '#B08430', marginLeft: 8 },
 
   unlockCard: {
     backgroundColor: '#FFFFFF',
@@ -349,7 +349,7 @@ const s = StyleSheet.create({
     lineHeight: 20,
   },
   unlockBtn: {
-    backgroundColor: '#0DA98E',
+    backgroundColor: '#3F7561',
     borderRadius: 999,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -386,7 +386,7 @@ const s = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
   },
-  celebrateStreak: { fontSize: 15, fontWeight: '700', color: '#F79009', marginTop: 8 },
+  celebrateStreak: { fontSize: 15, fontWeight: '700', color: '#B08430', marginTop: 8 },
   celebrateTreatLabel: {
     fontSize: 13,
     fontWeight: '700',
@@ -436,7 +436,7 @@ const s = StyleSheet.create({
     minHeight: 48,
   },
   saveBtn: {
-    backgroundColor: '#16B364',
+    backgroundColor: '#3F7561',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
@@ -445,5 +445,5 @@ const s = StyleSheet.create({
   },
   saveBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
   deleteBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  deleteBtnText: { color: '#F63D68', fontSize: 15, fontWeight: '700' },
+  deleteBtnText: { color: '#A64D57', fontSize: 15, fontWeight: '700' },
 });

@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,8 +29,8 @@ import {
 import { useIosPWAKeyboard } from '../lib/useIosPWAKeyboard';
 
 const COLORS = [
-  '#F97066', '#F79009', '#FDB022', '#66C61C', '#16B364', '#06AED4',
-  '#2E90FA', '#6172F3', '#9E77ED', '#EE46BC', '#F63D68', '#15B79E',
+  '#9D5B43', '#A87C33', '#6E7F45', '#3F7561', '#35748C', '#4C6B95',
+  '#64548C', '#8A5878', '#A05262', '#7A6A55', '#566A76', '#8C6B4F',
 ];
 
 function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
@@ -98,9 +97,15 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
 
 export default function WheelScreen() {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const size = Math.min(width - 48, 340);
   const iosPWAKeyboard = useIosPWAKeyboard();
+
+  // Measured on the client via onLayout. Deriving this from
+  // useWindowDimensions breaks under static rendering: the server renders
+  // width 0 and hydration never repairs the stale SVG size attributes.
+  const [wheelBox, setWheelBox] = useState<{ w: number; h: number } | null>(null);
+  const size = wheelBox
+    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 16, 340))
+    : 0;
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [log, setLog] = useState<LogEntry[]>([]);
@@ -203,16 +208,26 @@ export default function WheelScreen() {
           : 'Spin the wheel — future you says thanks'}
       </Text>
 
-      <View style={s.wheelArea}>
-        <View style={{ width: size, height: size }}>
-          <View style={s.pointer} />
-          <Animated.View style={{ transform: [{ rotate: spinDeg }] }}>
-            <WheelFace tasks={tasks} size={size} />
-          </Animated.View>
-          <View pointerEvents="none" style={s.hub}>
-            <Text style={{ fontSize: size * 0.09 }}>🧹</Text>
+      <View
+        style={s.wheelArea}
+        onLayout={(e) => {
+          const { width: w, height: h } = e.nativeEvent.layout;
+          setWheelBox((prev) =>
+            prev && prev.w === w && prev.h === h ? prev : { w, h }
+          );
+        }}
+      >
+        {size > 0 && (
+          <View style={{ width: size, height: size }}>
+            <View style={s.pointer} />
+            <Animated.View style={{ transform: [{ rotate: spinDeg }] }}>
+              <WheelFace tasks={tasks} size={size} />
+            </Animated.View>
+            <View pointerEvents="none" style={s.hub}>
+              <Text style={{ fontSize: size * 0.09 }}>🧹</Text>
+            </View>
           </View>
-        </View>
+        )}
       </View>
 
       <Pressable
@@ -345,10 +360,10 @@ export default function WheelScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FAF6EF', paddingHorizontal: 20 },
+  screen: { flex: 1, backgroundColor: '#F6F3EE', paddingHorizontal: 20 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontWeight: '800', color: '#33302E' },
-  headerAction: { fontSize: 15, fontWeight: '700', color: '#0DA98E' },
+  headerAction: { fontSize: 15, fontWeight: '700', color: '#3F7561' },
   subtitle: { fontSize: 14, color: '#8A8480', marginTop: 4 },
 
   wheelArea: { alignItems: 'center', justifyContent: 'center', flex: 1 },
@@ -377,7 +392,7 @@ const s = StyleSheet.create({
   },
 
   spinBtn: {
-    backgroundColor: '#FF5A8A',
+    backgroundColor: '#2E2A26',
     borderRadius: 999,
     paddingVertical: 18,
     alignItems: 'center',
@@ -425,7 +440,7 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   doneBtn: {
-    backgroundColor: '#16B364',
+    backgroundColor: '#3F7561',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
@@ -457,14 +472,14 @@ const s = StyleSheet.create({
 
   addBtn: {
     borderWidth: 2,
-    borderColor: '#0DA98E',
+    borderColor: '#3F7561',
     borderStyle: 'dashed',
     borderRadius: 14,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 10,
   },
-  addBtnText: { color: '#0DA98E', fontSize: 16, fontWeight: '700' },
+  addBtnText: { color: '#3F7561', fontSize: 16, fontWeight: '700' },
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -490,5 +505,5 @@ const s = StyleSheet.create({
     minHeight: 48,
   },
   deleteBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  deleteBtnText: { color: '#F63D68', fontSize: 15, fontWeight: '700' },
+  deleteBtnText: { color: '#A64D57', fontSize: 15, fontWeight: '700' },
 });

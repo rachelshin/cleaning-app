@@ -11,7 +11,7 @@ export default function RootLayout() {
           headerShown: false,
           tabBarActiveTintColor: '#33302E',
           tabBarInactiveTintColor: '#B8B2AC',
-          tabBarStyle: { backgroundColor: '#FFFFFF', borderTopColor: '#EFE9E0' },
+          tabBarStyle: { backgroundColor: '#FFFFFF', borderTopColor: '#E8E3DA' },
           tabBarLabelStyle: { fontWeight: '600' },
         }}
       >
