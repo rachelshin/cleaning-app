@@ -15,6 +15,7 @@ import {
   lastNDays,
   loadHabits,
   loadSuggestDismissed,
+  onDataChange,
   saveHabits,
   saveSuggestDismissed,
   streak,
@@ -40,11 +41,15 @@ export default function HabitsScreen() {
   const [suggestDismissed, setSuggestDismissed] = useState<string | null>(null);
 
   useEffect(() => {
-    loadHabits().then((h) => {
-      setHabits(h);
-      setLoaded(true);
-    });
-    loadSuggestDismissed().then(setSuggestDismissed);
+    const reload = () => {
+      loadHabits().then((h) => {
+        setHabits(h);
+        setLoaded(true);
+      });
+      loadSuggestDismissed().then(setSuggestDismissed);
+    };
+    reload();
+    return onDataChange(reload); // refresh when sync applies remote data
   }, []);
 
   const update = (next: Habit[]) => {

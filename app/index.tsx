@@ -14,12 +14,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
+import AccountSheet from '../components/AccountSheet';
 import {
   LogEntry,
   Task,
   loadLog,
   loadTasks,
   loadTreat,
+  onDataChange,
   saveLog,
   saveTasks,
   saveTreat,
@@ -187,14 +189,19 @@ export default function WheelScreen() {
   const [editing, setEditing] = useState<Task | null | undefined>(undefined);
   const [draft, setDraft] = useState('');
   const [treat, setTreat] = useState('');
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const rotation = useRef(new Animated.Value(0)).current;
   const rotationTotal = useRef(0);
 
   useEffect(() => {
-    loadTasks().then(setTasks);
-    loadLog().then(setLog);
-    loadTreat().then(setTreat);
+    const reload = () => {
+      loadTasks().then(setTasks);
+      loadLog().then(setLog);
+      loadTreat().then(setTreat);
+    };
+    reload();
+    return onDataChange(reload); // refresh when sync applies remote data
   }, []);
 
   const updateTasks = (next: Task[]) => {
@@ -270,9 +277,14 @@ export default function WheelScreen() {
       <View style={s.content}>
         <View style={s.header}>
           <Text style={s.title}>Spin to Clean 🧽</Text>
-          <Pressable onPress={() => setManageOpen(true)} hitSlop={8}>
-            <Text style={s.headerAction}>Edit tasks</Text>
-          </Pressable>
+          <View style={s.headerRight}>
+            <Pressable onPress={() => setManageOpen(true)} hitSlop={8}>
+              <Text style={s.headerAction}>Edit tasks</Text>
+            </Pressable>
+            <Pressable onPress={() => setAccountOpen(true)} hitSlop={8}>
+              <Text style={s.headerIcon}>👤</Text>
+            </Pressable>
+          </View>
         </View>
         <Text style={s.subtitle}>
           {doneThisWeek > 0
@@ -435,6 +447,8 @@ export default function WheelScreen() {
           </View>
         </View>
       </Modal>
+
+      <AccountSheet visible={accountOpen} onClose={() => setAccountOpen(false)} />
     </View>
   );
 }
@@ -445,6 +459,8 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
   headerAction: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#00A896' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  headerIcon: { fontSize: 20 },
   subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#8A8480', marginTop: 4 },
 
   wheelArea: { alignItems: 'center', justifyContent: 'center', flex: 1 },

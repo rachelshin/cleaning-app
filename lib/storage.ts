@@ -14,6 +14,79 @@ const HABITS_KEY = 'spinclean:habits';
 const LOG_KEY = 'spinclean:log';
 const TREAT_KEY = 'spinclean:treat';
 const SUGGEST_DISMISSED_KEY = 'spinclean:suggest-dismissed';
+const UPDATED_AT_KEY = 'spinclean:updatedAt';
+
+// ---- Offline-first sync plumbing ----
+// AsyncStorage is the source of truth the UI reads/writes instantly.
+// Every user edit stamps UPDATED_AT_KEY and pings the sync module (if
+// running), which pushes to Firestore in the background. Remote changes
+// come in through applyRemoteData, which raw-writes storage and notifies
+// screens via onDataChange — deliberately a separate path so a remote
+// apply never re-triggers a push.
+
+const dataListeners = new Set<() => void>();
+
+// Screens subscribe to reload their state when sync applies remote data.
+export function onDataChange(fn: () => void): () => void {
+  dataListeners.add(fn);
+  return () => {
+    dataListeners.delete(fn);
+  };
+}
+
+let onLocalChange: (() => void) | null = null;
+export function setOnLocalChange(fn: (() => void) | null) {
+  onLocalChange = fn;
+}
+
+async function touch() {
+  await AsyncStorage.setItem(UPDATED_AT_KEY, String(Date.now()));
+  onLocalChange?.();
+}
+
+export async function getLocalUpdatedAt(): Promise<number> {
+  return Number(await AsyncStorage.getItem(UPDATED_AT_KEY)) || 0;
+}
+
+// Everything that syncs, as one Firestore document.
+export type AppData = {
+  tasks: Task[];
+  habits: Habit[];
+  log: LogEntry[];
+  treat: string;
+  suggestDismissed: string | null;
+  updatedAt: number;
+};
+
+export async function collectAllData(): Promise<AppData> {
+  return {
+    tasks: await loadTasks(),
+    habits: await loadHabits(),
+    log: await loadLog(),
+    treat: await loadTreat(),
+    suggestDismissed: await AsyncStorage.getItem(SUGGEST_DISMISSED_KEY),
+    updatedAt: await getLocalUpdatedAt(),
+  };
+}
+
+export async function applyRemoteData(remote: Partial<AppData>) {
+  const pairs: [string, string][] = [];
+  if (Array.isArray(remote.tasks)) pairs.push([TASKS_KEY, JSON.stringify(remote.tasks)]);
+  if (Array.isArray(remote.habits)) pairs.push([HABITS_KEY, JSON.stringify(remote.habits)]);
+  if (Array.isArray(remote.log)) pairs.push([LOG_KEY, JSON.stringify(remote.log)]);
+  if (typeof remote.treat === 'string') pairs.push([TREAT_KEY, remote.treat]);
+  if (typeof remote.suggestDismissed === 'string')
+    pairs.push([SUGGEST_DISMISSED_KEY, remote.suggestDismissed]);
+  pairs.push([UPDATED_AT_KEY, String(remote.updatedAt ?? Date.now())]);
+  await AsyncStorage.multiSet(pairs);
+  dataListeners.forEach((fn) => fn());
+}
+
+// Drop the local timestamp so the next remote snapshot always wins —
+// used when switching to a different account on this device.
+export async function resetLocalUpdatedAt() {
+  await AsyncStorage.setItem(UPDATED_AT_KEY, '0');
+}
 
 // Hidden mechanic — never surfaced in the UI, so doing well never reads as
 // "earning more work". Once every habit has quietly held this streak
@@ -38,8 +111,10 @@ export async function loadSuggestDismissed(): Promise<string | null> {
   return AsyncStorage.getItem(SUGGEST_DISMISSED_KEY);
 }
 
-export const saveSuggestDismissed = (date: string) =>
-  AsyncStorage.setItem(SUGGEST_DISMISSED_KEY, date);
+export const saveSuggestDismissed = async (date: string) => {
+  await AsyncStorage.setItem(SUGGEST_DISMISSED_KEY, date);
+  await touch();
+};
 
 export const todayStr = () => new Date().toLocaleDateString('en-CA');
 
@@ -72,8 +147,10 @@ export async function loadTasks(): Promise<Task[]> {
   return seeded;
 }
 
-export const saveTasks = (tasks: Task[]) =>
-  AsyncStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+export const saveTasks = async (tasks: Task[]) => {
+  await AsyncStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+  await touch();
+};
 
 export async function loadHabits(): Promise<Habit[]> {
   const raw = await AsyncStorage.getItem(HABITS_KEY);
@@ -83,24 +160,30 @@ export async function loadHabits(): Promise<Habit[]> {
   return seeded;
 }
 
-export const saveHabits = (habits: Habit[]) =>
-  AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
+export const saveHabits = async (habits: Habit[]) => {
+  await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
+  await touch();
+};
 
 export async function loadLog(): Promise<LogEntry[]> {
   const raw = await AsyncStorage.getItem(LOG_KEY);
   return raw ? JSON.parse(raw) : [];
 }
 
-export const saveLog = (log: LogEntry[]) =>
-  AsyncStorage.setItem(LOG_KEY, JSON.stringify(log));
+export const saveLog = async (log: LogEntry[]) => {
+  await AsyncStorage.setItem(LOG_KEY, JSON.stringify(log));
+  await touch();
+};
 
 // The treat the user promises themselves for finishing a wheel task.
 export async function loadTreat(): Promise<string> {
   return (await AsyncStorage.getItem(TREAT_KEY)) ?? '';
 }
 
-export const saveTreat = (treat: string) =>
-  AsyncStorage.setItem(TREAT_KEY, treat);
+export const saveTreat = async (treat: string) => {
+  await AsyncStorage.setItem(TREAT_KEY, treat);
+  await touch();
+};
 
 // Consecutive days done, counting back from today (or yesterday if today isn't done yet).
 export function streak(done: Record<string, boolean>): number {

@@ -6,7 +6,9 @@ import {
 } from '@expo-google-fonts/nunito';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { Platform, Text } from 'react-native';
+import { startSync } from '../lib/sync';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -14,6 +16,10 @@ export default function RootLayout() {
     Nunito_700Bold,
     Nunito_800ExtraBold,
   });
+
+  useEffect(() => {
+    startSync();
+  }, []);
 
   // Native throws on unknown fontFamily; web just falls back until the
   // @font-face registers, so don't blank the screen there.
