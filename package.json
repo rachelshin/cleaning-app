@@ -1,12 +1,22 @@
 {
   "name": "cleaning-app",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "expo-router/entry",
   "dependencies": {
+    "@expo/metro-runtime": "~57.0.3",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.4",
+    "expo-constants": "~57.0.3",
+    "expo-linking": "~57.0.2",
+    "expo-router": "~57.0.4",
     "expo-status-bar": "~57.0.0",
     "react": "19.2.3",
-    "react-native": "0.86.0"
+    "react-dom": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "^0.21.2"
   },
   "scripts": {
     "start": "expo start",
@@ -14,5 +24,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "typescript": "^6.0.3"
+  }
 }
