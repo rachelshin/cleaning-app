@@ -128,6 +128,7 @@ export default function HabitsScreen() {
 
   return (
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
+      <View style={s.content}>
       <View style={s.header}>
         <Text style={s.title}>
           {habits.length > 1 ? 'Daily Habits 🌱' : 'Daily Habit 🌱'}
@@ -208,6 +209,7 @@ export default function HabitsScreen() {
           </View>
         )}
       </ScrollView>
+      </View>
 
       {/* Celebration on checking off */}
       <Modal
@@ -292,9 +294,10 @@ export default function HabitsScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F6F3EE', paddingHorizontal: 20 },
+  content: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 26, fontWeight: '800', color: '#33302E' },
-  subtitle: { fontSize: 14, color: '#8A8480', marginTop: 4 },
+  title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
+  subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#8A8480', marginTop: 4 },
 
   card: {
     flexDirection: 'row',
@@ -315,10 +318,10 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  checkOn: { backgroundColor: '#3F7561', borderColor: '#3F7561' },
-  checkMark: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  checkOn: { backgroundColor: '#00A896', borderColor: '#00A896' },
+  checkMark: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   cardBody: { flex: 1 },
-  cardLabel: { fontSize: 17, fontWeight: '600', color: '#33302E' },
+  cardLabel: { fontSize: 17, fontFamily: 'Nunito_700Bold', color: '#33302E' },
   cardLabelDone: { color: '#A39D95', textDecorationLine: 'line-through' },
   dotsRow: { flexDirection: 'row', gap: 5, marginTop: 6 },
   dot: {
@@ -327,10 +330,10 @@ const s = StyleSheet.create({
     borderRadius: 4.5,
     backgroundColor: '#EDE7DC',
   },
-  dotOn: { backgroundColor: '#3F7561' },
+  dotOn: { backgroundColor: '#00A896' },
   dotToday: { borderWidth: 1.5, borderColor: '#33302E' },
-  cardTreat: { fontSize: 13, color: '#8A8480', marginTop: 7 },
-  streak: { fontSize: 15, fontWeight: '700', color: '#B08430', marginLeft: 8 },
+  cardTreat: { fontSize: 13, fontFamily: 'Nunito_600SemiBold', color: '#8A8480', marginTop: 7 },
+  streak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#E8960C', marginLeft: 8 },
 
   unlockCard: {
     backgroundColor: '#FFFFFF',
@@ -339,9 +342,10 @@ const s = StyleSheet.create({
     marginTop: 8,
     alignItems: 'center',
   },
-  unlockTitle: { fontSize: 18, fontWeight: '800', color: '#33302E' },
+  unlockTitle: { fontSize: 18, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
   unlockBody: {
     fontSize: 14,
+    fontFamily: 'Nunito_600SemiBold',
     color: '#8A8480',
     textAlign: 'center',
     marginTop: 6,
@@ -349,16 +353,16 @@ const s = StyleSheet.create({
     lineHeight: 20,
   },
   unlockBtn: {
-    backgroundColor: '#3F7561',
+    backgroundColor: '#00A896',
     borderRadius: 999,
     paddingVertical: 12,
     paddingHorizontal: 24,
   },
-  unlockBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  unlockBtnText: { color: '#FFFFFF', fontSize: 15, fontFamily: 'Nunito_800ExtraBold' },
   notNowText: {
     color: '#8A8480',
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Nunito_700Bold',
     paddingVertical: 10,
     marginTop: 4,
   },
@@ -381,15 +385,15 @@ const s = StyleSheet.create({
   celebrateEmoji: { fontSize: 44 },
   celebrateTitle: {
     fontSize: 21,
-    fontWeight: '800',
+    fontFamily: 'Nunito_800ExtraBold',
     color: '#33302E',
     textAlign: 'center',
     marginTop: 8,
   },
-  celebrateStreak: { fontSize: 15, fontWeight: '700', color: '#B08430', marginTop: 8 },
+  celebrateStreak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#E8960C', marginTop: 8 },
   celebrateTreatLabel: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Nunito_700Bold',
     color: '#8A8480',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
@@ -397,7 +401,7 @@ const s = StyleSheet.create({
   },
   celebrateTreat: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Nunito_700Bold',
     color: '#33302E',
     textAlign: 'center',
     marginTop: 4,
@@ -413,6 +417,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 18,
     maxHeight: '85%',
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
   },
   sheetHeader: {
     flexDirection: 'row',
@@ -420,10 +427,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  sheetTitle: { fontSize: 20, fontWeight: '800', color: '#33302E' },
-  closeX: { fontSize: 20, color: '#8A8480', fontWeight: '600' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
+  closeX: { fontSize: 20, color: '#8A8480', fontFamily: 'Nunito_700Bold' },
 
-  inputLabel: { fontSize: 14, fontWeight: '700', color: '#8A8480', marginBottom: 6 },
+  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#8A8480', marginBottom: 6 },
   input: {
     borderWidth: 1.5,
     borderColor: '#E5DFD5',
@@ -431,19 +438,20 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
+    fontFamily: 'Nunito_600SemiBold',
     color: '#33302E',
     marginBottom: 16,
     minHeight: 48,
   },
   saveBtn: {
-    backgroundColor: '#3F7561',
+    backgroundColor: '#00A896',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
     alignSelf: 'stretch',
     marginTop: 8,
   },
-  saveBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  saveBtnText: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   deleteBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  deleteBtnText: { color: '#A64D57', fontSize: 15, fontWeight: '700' },
+  deleteBtnText: { color: '#E23D5B', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 });

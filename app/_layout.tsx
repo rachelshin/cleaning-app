@@ -1,8 +1,24 @@
+import {
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/nunito';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+  });
+
+  // Native throws on unknown fontFamily; web just falls back until the
+  // @font-face registers, so don't blank the screen there.
+  if (!fontsLoaded && Platform.OS !== 'web') return null;
+
   return (
     <>
       <StatusBar style="dark" />
@@ -12,7 +28,7 @@ export default function RootLayout() {
           tabBarActiveTintColor: '#33302E',
           tabBarInactiveTintColor: '#B8B2AC',
           tabBarStyle: { backgroundColor: '#FFFFFF', borderTopColor: '#E8E3DA' },
-          tabBarLabelStyle: { fontWeight: '600' },
+          tabBarLabelStyle: { fontFamily: 'Nunito_700Bold' },
         }}
       >
         <Tabs.Screen
