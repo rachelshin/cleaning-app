@@ -64,8 +64,10 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
     C + r * Math.cos(rad(a)),
     C + r * Math.sin(rad(a)),
   ];
-  const fontSize = Math.max(11, Math.min(15, size * 0.042));
-  const maxChars = Math.floor((R * 0.72) / (fontSize * 0.54));
+  const baseFontSize = Math.max(12, Math.min(17, size * 0.045));
+  const hubR = size * 0.07;
+  // Radial room a label can occupy: from just outside the hub to the rim.
+  const availLen = R * 0.93 - hubR - 10;
 
   return (
     <Svg width={size} height={size}>
@@ -94,8 +96,15 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
         const flip = norm > 90 && norm < 270;
         const angle = flip ? mid + 180 : mid;
         // Anchor at the rim so every label ends right at the wheel's edge
-        // and runs inward along its spoke.
+        // and runs inward along its spoke. Shrink the font per label so the
+        // whole text always fits (~0.54em average glyph width for Nunito);
+        // truncate only if it still can't fit at the minimum size.
         const [lx, ly] = pt(mid, R * 0.93);
+        const fs = Math.max(
+          8,
+          Math.min(baseFontSize, availLen / (t.label.length * 0.54))
+        );
+        const maxChars = Math.floor(availLen / (fs * 0.54));
         const label =
           t.label.length > maxChars ? t.label.slice(0, maxChars - 1) + '…' : t.label;
         return (
@@ -104,7 +113,7 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
             x={lx}
             y={ly}
             fill={labelColor(COLORS[i % COLORS.length])}
-            fontSize={fontSize}
+            fontSize={fs}
             fontFamily="Nunito_800ExtraBold"
             textAnchor={flip ? 'start' : 'end'}
             alignmentBaseline="middle"
@@ -114,7 +123,7 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
           </SvgText>
         );
       })}
-      <Circle cx={C} cy={C} r={size * 0.085} fill="#FFFFFF" />
+      <Circle cx={C} cy={C} r={hubR} fill="#FFFFFF" />
     </Svg>
   );
 }
@@ -128,7 +137,7 @@ export default function WheelScreen() {
   // width 0 and hydration never repairs the stale SVG size attributes.
   const [wheelBox, setWheelBox] = useState<{ w: number; h: number } | null>(null);
   const size = wheelBox
-    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 16, 500))
+    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 16, 640))
     : 0;
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -249,7 +258,7 @@ export default function WheelScreen() {
                 <WheelFace tasks={tasks} size={size} />
               </Animated.View>
               <View pointerEvents="none" style={s.hub}>
-                <Text style={{ fontSize: size * 0.09 }}>🧹</Text>
+                <Text style={{ fontSize: size * 0.075 }}>🧹</Text>
               </View>
             </View>
           )}
@@ -394,7 +403,7 @@ export default function WheelScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F6F3EE', paddingHorizontal: 20 },
-  content: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  content: { flex: 1, width: '100%', maxWidth: 680, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
   headerAction: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#00A896' },
