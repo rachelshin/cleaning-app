@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -54,6 +54,24 @@ function labelColor(hex: string) {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? '#4A3B14' : '#FFFFFF';
 }
 
+// Split at the word break that keeps the longer line shortest.
+function wrapTwoLines(label: string): string[] {
+  const words = label.split(' ');
+  if (words.length === 1) return [label];
+  let best = [label];
+  let bestMax = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const a = words.slice(0, i).join(' ');
+    const b = words.slice(i).join(' ');
+    const m = Math.max(a.length, b.length);
+    if (m < bestMax) {
+      bestMax = m;
+      best = [a, b];
+    }
+  }
+  return best;
+}
+
 function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
   const C = size / 2;
   const R = C - 4;
@@ -64,7 +82,7 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
     C + r * Math.cos(rad(a)),
     C + r * Math.sin(rad(a)),
   ];
-  const baseFontSize = Math.max(12, Math.min(17, size * 0.045));
+  const baseFontSize = Math.max(13, Math.min(19, size * 0.05));
   const hubR = size * 0.07;
   // Radial room a label can occupy: from just outside the hub to the rim.
   const availLen = R * 0.93 - hubR - 10;
@@ -95,32 +113,52 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
         // Flip labels on the left half so they never render upside down.
         const flip = norm > 90 && norm < 270;
         const angle = flip ? mid + 180 : mid;
-        // Anchor at the rim so every label ends right at the wheel's edge
-        // and runs inward along its spoke. Shrink the font per label so the
-        // whole text always fits (~0.54em average glyph width for Nunito);
-        // truncate only if it still can't fit at the minimum size.
+        // Labels anchor at the rim and run inward along their spoke
+        // (~0.54em average glyph width for Nunito). If a label is too long
+        // for the base size on one line, wrap it to two lines so the font
+        // can stay big; only shrink below base as a last resort.
         const [lx, ly] = pt(mid, R * 0.93);
-        const fs = Math.max(
-          8,
-          Math.min(baseFontSize, availLen / (t.label.length * 0.54))
-        );
-        const maxChars = Math.floor(availLen / (fs * 0.54));
-        const label =
-          t.label.length > maxChars ? t.label.slice(0, maxChars - 1) + '…' : t.label;
+        const fill = labelColor(COLORS[i % COLORS.length]);
+        const oneLineFs = availLen / (t.label.length * 0.54);
+        let lines = [t.label];
+        let fs = Math.min(baseFontSize, oneLineFs);
+        if (oneLineFs < baseFontSize) {
+          const two = wrapTwoLines(t.label);
+          if (two.length === 2) {
+            const maxLen = Math.max(two[0].length, two[1].length);
+            const twoFs = availLen / (maxLen * 0.54);
+            if (twoFs > oneLineFs) {
+              lines = two;
+              fs = Math.min(baseFontSize, twoFs);
+            }
+          }
+        }
+        fs = Math.max(8, fs);
+        const lineOffset = fs * 0.62;
         return (
-          <SvgText
-            key={t.id}
-            x={lx}
-            y={ly}
-            fill={labelColor(COLORS[i % COLORS.length])}
-            fontSize={fs}
-            fontFamily="Nunito_800ExtraBold"
-            textAnchor={flip ? 'start' : 'end'}
-            alignmentBaseline="middle"
-            transform={`rotate(${angle} ${lx} ${ly})`}
-          >
-            {label}
-          </SvgText>
+          <Fragment key={t.id}>
+            {lines.map((line, li) => (
+              <SvgText
+                key={li}
+                x={lx}
+                y={
+                  lines.length === 1
+                    ? ly
+                    : li === 0
+                      ? ly - lineOffset
+                      : ly + lineOffset
+                }
+                fill={fill}
+                fontSize={fs}
+                fontFamily="Nunito_800ExtraBold"
+                textAnchor={flip ? 'start' : 'end'}
+                alignmentBaseline="middle"
+                transform={`rotate(${angle} ${lx} ${ly})`}
+              >
+                {line}
+              </SvgText>
+            ))}
+          </Fragment>
         );
       })}
       <Circle cx={C} cy={C} r={hubR} fill="#FFFFFF" />
