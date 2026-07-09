@@ -267,12 +267,12 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
   saveBtn: {
-    backgroundColor: '#00A896',
+    backgroundColor: '#3FA34D',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
   },
   saveBtnText: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   outlineBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  outlineBtnText: { color: '#00A896', fontSize: 15, fontFamily: 'Nunito_700Bold' },
+  outlineBtnText: { color: '#3FA34D', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 });

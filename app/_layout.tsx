@@ -51,7 +51,7 @@ export default function RootLayout() {
           options={{
             title: 'Habits',
             tabBarIcon: ({ focused }) => (
-              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>🔥</Text>
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>🌱</Text>
             ),
           }}
         />

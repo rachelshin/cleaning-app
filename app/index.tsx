@@ -276,7 +276,7 @@ export default function WheelScreen() {
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
       <View style={s.content}>
         <View style={s.header}>
-          <Text style={s.title}>Spin to Clean 🧽</Text>
+          <Text style={s.title}>Clean Bean 🫘</Text>
           <View style={s.headerRight}>
             <Pressable onPress={() => setManageOpen(true)} hitSlop={8}>
               <Text style={s.headerAction}>Edit tasks</Text>
@@ -288,8 +288,8 @@ export default function WheelScreen() {
         </View>
         <Text style={s.subtitle}>
           {doneThisWeek > 0
-            ? `✨ ${doneThisWeek} task${doneThisWeek === 1 ? '' : 's'} crushed this week`
-            : 'Spin the wheel — future you says thanks'}
+            ? `✨ ${doneThisWeek} bean${doneThisWeek === 1 ? '' : 's'} earned this week`
+            : 'What’ll it bean today? Spin to find out'}
         </Text>
 
         <View
@@ -308,11 +308,19 @@ export default function WheelScreen() {
                 <WheelFace tasks={tasks} size={size} />
               </Animated.View>
               <View pointerEvents="none" style={s.hub}>
-                <Text style={{ fontSize: size * 0.075 }}>🧹</Text>
+                <Text style={{ fontSize: size * 0.075 }}>🫘</Text>
               </View>
             </View>
           )}
         </View>
+
+        <Pressable style={s.treatPill} onPress={() => setManageOpen(true)}>
+          <Text style={s.treatPillText}>
+            {treat.trim()
+              ? `🍬 Reward: ${treat.trim()}`
+              : '🍬 Set a reward for finishing'}
+          </Text>
+        </Pressable>
 
         <Pressable
           onPress={spin}
@@ -454,11 +462,11 @@ export default function WheelScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F6F3EE', paddingHorizontal: 20 },
+  screen: { flex: 1, backgroundColor: '#F7F2E9', paddingHorizontal: 20 },
   content: { flex: 1, width: '100%', maxWidth: 680, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
-  headerAction: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#00A896' },
+  headerAction: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#3FA34D' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   headerIcon: { fontSize: 20 },
   subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#8A8480', marginTop: 4 },
@@ -487,6 +495,16 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  treatPill: {
+    alignSelf: 'center',
+    backgroundColor: '#FBEED3',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    marginBottom: 14,
+  },
+  treatPillText: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#8A6A1F' },
 
   spinWrap: { marginBottom: 24, borderRadius: 999 },
   spinBtn: {
@@ -542,7 +560,7 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   doneBtn: {
-    backgroundColor: '#00A896',
+    backgroundColor: '#3FA34D',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
@@ -577,14 +595,14 @@ const s = StyleSheet.create({
 
   addBtn: {
     borderWidth: 2,
-    borderColor: '#00A896',
+    borderColor: '#3FA34D',
     borderStyle: 'dashed',
     borderRadius: 14,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 10,
   },
-  addBtnText: { color: '#00A896', fontSize: 16, fontFamily: 'Nunito_700Bold' },
+  addBtnText: { color: '#3FA34D', fontSize: 16, fontFamily: 'Nunito_700Bold' },
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',

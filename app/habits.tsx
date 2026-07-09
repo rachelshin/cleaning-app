@@ -124,19 +124,19 @@ export default function HabitsScreen() {
 
   const subtitle =
     habits.length === 0
-      ? 'Start with one tiny habit — that’s the whole game'
+      ? 'Every big bean starts as a tiny sprout'
       : doneToday === habits.length
-        ? 'Done for today — go enjoy yourself ✨'
+        ? 'All done for today, human bean ✨'
         : habits.length === 1
-          ? 'One small win, every day'
-          : `${doneToday} of ${habits.length} done today`;
+          ? 'One small bean, every day'
+          : `${doneToday} of ${habits.length} beans done today`;
 
   return (
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
       <View style={s.content}>
       <View style={s.header}>
         <Text style={s.title}>
-          {habits.length > 1 ? 'Daily Habits 🌱' : 'Daily Habit 🌱'}
+          {habits.length > 1 ? 'Daily Beans 🌱' : 'Daily Bean 🌱'}
         </Text>
       </View>
       <Text style={s.subtitle}>{subtitle}</Text>
@@ -178,7 +178,15 @@ export default function HabitsScreen() {
                     />
                   ))}
                 </View>
-                {!!h.reward && <Text style={s.cardTreat}>🍬 {h.reward}</Text>}
+                {h.reward ? (
+                  <View style={s.treatPill}>
+                    <Text style={s.treatPillText}>🍬 {h.reward}</Text>
+                  </View>
+                ) : (
+                  <View style={s.treatPillEmpty}>
+                    <Text style={s.treatPillEmptyText}>🍬 Add a treat</Text>
+                  </View>
+                )}
               </Pressable>
               {streakCount > 0 && <Text style={s.streak}>🔥 {streakCount}</Text>}
             </View>
@@ -187,13 +195,13 @@ export default function HabitsScreen() {
 
         {loaded && habits.length === 0 && (
           <View style={s.unlockCard}>
-            <Text style={s.unlockTitle}>🌱 One tiny habit</Text>
+            <Text style={s.unlockTitle}>🫘 Plant your first bean</Text>
             <Text style={s.unlockBody}>
-              Pick something so small you can’t say no — and a treat for doing
+              Pick a habit so small you can’t say no — and a treat for doing
               it.
             </Text>
             <Pressable style={s.unlockBtn} onPress={openAdd}>
-              <Text style={s.unlockBtnText}>Start my habit</Text>
+              <Text style={s.unlockBtnText}>Plant it</Text>
             </Pressable>
           </View>
         )}
@@ -202,8 +210,8 @@ export default function HabitsScreen() {
           <View style={s.unlockCard}>
             <Text style={s.unlockTitle}>✨ Feeling good?</Text>
             <Text style={s.unlockBody}>
-              You’ve been on a roll lately. If you feel like it, add one more
-              tiny habit — no pressure at all.
+              You’ve been on a roll lately. If you feel like it, plant one
+              more tiny bean — no pressure at all.
             </Text>
             <Pressable style={s.unlockBtn} onPress={openAdd}>
               <Text style={s.unlockBtnText}>+ Add a habit</Text>
@@ -298,7 +306,7 @@ export default function HabitsScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F6F3EE', paddingHorizontal: 20 },
+  screen: { flex: 1, backgroundColor: '#F7F2E9', paddingHorizontal: 20 },
   content: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
@@ -323,7 +331,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  checkOn: { backgroundColor: '#00A896', borderColor: '#00A896' },
+  checkOn: { backgroundColor: '#3FA34D', borderColor: '#3FA34D' },
   checkMark: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   cardBody: { flex: 1 },
   cardLabel: { fontSize: 17, fontFamily: 'Nunito_700Bold', color: '#33302E' },
@@ -335,9 +343,28 @@ const s = StyleSheet.create({
     borderRadius: 4.5,
     backgroundColor: '#EDE7DC',
   },
-  dotOn: { backgroundColor: '#00A896' },
+  dotOn: { backgroundColor: '#3FA34D' },
   dotToday: { borderWidth: 1.5, borderColor: '#33302E' },
-  cardTreat: { fontSize: 13, fontFamily: 'Nunito_600SemiBold', color: '#8A8480', marginTop: 7 },
+  treatPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FBEED3',
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    marginTop: 9,
+  },
+  treatPillText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A6A1F' },
+  treatPillEmpty: {
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#D8D2C8',
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    marginTop: 9,
+  },
+  treatPillEmptyText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A8480' },
   streak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#E8960C', marginLeft: 8 },
 
   unlockCard: {
@@ -358,7 +385,7 @@ const s = StyleSheet.create({
     lineHeight: 20,
   },
   unlockBtn: {
-    backgroundColor: '#00A896',
+    backgroundColor: '#3FA34D',
     borderRadius: 999,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -449,7 +476,7 @@ const s = StyleSheet.create({
     minHeight: 48,
   },
   saveBtn: {
-    backgroundColor: '#00A896',
+    backgroundColor: '#3FA34D',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',

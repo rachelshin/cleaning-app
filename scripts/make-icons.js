@@ -57,22 +57,42 @@ function writePng(file, size, pixel) {
 const inStar = (dx, dy, r) =>
   Math.sqrt(Math.abs(dx)) + Math.sqrt(Math.abs(dy)) <= Math.sqrt(r);
 
+// A kidney bean: 45°-rotated ellipse with a circular bite taken out of
+// its inner curve, plus a little highlight for shine.
 function draw(size) {
   const c = size / 2;
-  const big = size * 0.3;
-  const small = size * 0.1;
+  const a = size * 0.32; // bean half-length
+  const b = size * 0.21; // bean half-width
+  const biteR = size * 0.13;
+  const R = Math.SQRT1_2;
   return (x, y) => {
-    if (
-      inStar(x - c, y - c * 1.06, big) ||
-      inStar(x - size * 0.78, y - size * 0.24, small)
-    ) {
+    const dx = x - c;
+    const dy = y - c;
+    // rotate 45° so the bean lies diagonally
+    const u = dx * R + dy * R;
+    const v = -dx * R + dy * R;
+    const inEllipse = (u / a) ** 2 + (v / b) ** 2 <= 1;
+    const inBite = u ** 2 + (v + b) ** 2 <= biteR ** 2;
+    if (inEllipse && !inBite) {
+      // shine spot near the top of the bean
+      const inShine =
+        ((u + a * 0.35) / (a * 0.16)) ** 2 + ((v - b * 0.15) / (b * 0.3)) ** 2 <= 1;
+      if (inShine) return [255, 255, 255];
+      const t = (v + b) / (2 * b); // shade across the bean's width
+      return [
+        Math.round(87 - 24 * t),
+        Math.round(175 - 34 * t),
+        Math.round(93 - 24 * t),
+      ];
+    }
+    if (inStar(x - size * 0.78, y - size * 0.2, size * 0.09)) {
       return [255, 255, 255];
     }
-    const t = y / size; // vertical teal gradient
+    const t = y / size; // creamy background gradient
     return [
-      0,
-      Math.round(191 - 54 * t),
-      Math.round(165 - 42 * t),
+      Math.round(249 - 10 * t),
+      Math.round(243 - 14 * t),
+      Math.round(230 - 20 * t),
     ];
   };
 }
