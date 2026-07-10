@@ -1,12 +1,16 @@
 import {
   createUserWithEmailAndPassword,
   EmailAuthProvider,
+  getRedirectResult,
   GoogleAuthProvider,
   linkWithCredential,
   linkWithPopup,
+  linkWithRedirect,
   onAuthStateChanged,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   User,
 } from 'firebase/auth';
@@ -22,7 +26,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { auth, firebaseReady } from '../lib/firebase';
+import { auth, firebaseReady, isStandalonePWA } from '../lib/firebase';
 import { useIosPWAKeyboard } from '../lib/useIosPWAKeyboard';
 
 const FRIENDLY: Record<string, string> = {
@@ -34,7 +38,19 @@ const FRIENDLY: Record<string, string> = {
   'auth/user-not-found': 'No account with that email — try Create account.',
   'auth/email-already-in-use': 'That email already has an account — try Sign in.',
   'auth/popup-closed-by-user': 'Sign-in window was closed.',
+  'auth/popup-blocked': 'Your browser blocked the sign-in window — try again.',
+  'auth/unauthorized-domain':
+    'This domain isn’t authorized for sign-in — add it in the Firebase console.',
 };
+
+// Signing into a Google account that already exists: reuse the credential
+// Firebase attached to the link error. Opening a second popup here would be
+// blocked (it's no longer inside the user's tap gesture).
+async function signInToExisting(e: any) {
+  const cred = GoogleAuthProvider.credentialFromError(e);
+  if (!cred) throw e;
+  await signInWithCredential(auth!, cred);
+}
 
 export default function AccountSheet({
   visible,
@@ -63,6 +79,38 @@ export default function AccountSheet({
     });
   }, []);
 
+  // Pick up the result of a redirect sign-in (standalone PWA flow) after
+  // the app reloads on return from Google.
+  useEffect(() => {
+    if (!auth || Platform.OS !== 'web') return;
+    getRedirectResult(auth)
+      .then((res) => {
+        if (res) refresh();
+      })
+      .catch(async (e: any) => {
+        try {
+          if (e?.code === 'auth/credential-already-in-use') {
+            await signInToExisting(e);
+            refresh();
+          } else {
+            fail(e);
+          }
+        } catch (e2) {
+          fail(e2);
+        }
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A hung popup promise must never leave the buttons permanently
+  // disabled — reopening the sheet always starts clean.
+  useEffect(() => {
+    if (visible) {
+      setBusy(false);
+      setError('');
+    }
+  }, [visible]);
+
   const fail = (e: any) =>
     setError(FRIENDLY[e?.code] ?? 'Something went wrong — try again.');
 
@@ -90,6 +138,18 @@ export default function AccountSheet({
   const googleSignIn = withBusy(async () => {
     const provider = new GoogleAuthProvider();
     const current = auth!.currentUser;
+
+    if (isStandalonePWA) {
+      // Installed PWAs can't use popups — navigate away to Google and pick
+      // the result up in getRedirectResult when the app reloads.
+      if (current?.isAnonymous) {
+        await linkWithRedirect(current, provider);
+      } else {
+        await signInWithRedirect(auth!, provider);
+      }
+      return;
+    }
+
     try {
       if (current?.isAnonymous) {
         // Keeps the same uid, so all guest data carries over.
@@ -100,7 +160,7 @@ export default function AccountSheet({
     } catch (e: any) {
       // Google account already has its own account — sign into it instead.
       if (e?.code === 'auth/credential-already-in-use') {
-        await signInWithPopup(auth!, provider);
+        await signInToExisting(e);
       } else {
         throw e;
       }

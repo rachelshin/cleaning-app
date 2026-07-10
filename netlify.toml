@@ -2,6 +2,19 @@
   command = "npx expo export --platform web"
   publish = "dist"
 
+# Serve Firebase's auth handler from our own domain so Safari's
+# cross-origin storage partitioning doesn't break redirect sign-in
+# in the installed PWA. Must come before the /* catch-all.
+[[redirects]]
+  from = "/__/auth/*"
+  to = "https://cleaning-app-1511d.firebaseapp.com/__/auth/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/__/firebase/*"
+  to = "https://cleaning-app-1511d.firebaseapp.com/__/firebase/:splat"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
