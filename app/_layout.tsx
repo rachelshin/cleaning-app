@@ -31,9 +31,9 @@ export default function RootLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#33302E',
-          tabBarInactiveTintColor: '#B8B2AC',
-          tabBarStyle: { backgroundColor: '#FFFFFF', borderTopColor: '#E8E3DA' },
+          tabBarActiveTintColor: '#3A4750',
+          tabBarInactiveTintColor: '#A8BCCA',
+          tabBarStyle: { backgroundColor: '#FFFFFF', borderTopColor: '#DCE7EF' },
           tabBarLabelStyle: { fontFamily: 'Nunito_700Bold' },
         }}
       >

@@ -3,7 +3,7 @@ import type { PropsWithChildren } from 'react';
 
 const css = `
 html, body, #root { height: 100%; }
-body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; }
+body { overscroll-behavior-y: none; -webkit-tap-highlight-color: transparent; background: #DCEBF4; }
 input, textarea { font-size: 16px !important; }
 input, textarea, select { outline: none !important; box-shadow: none !important; }
 *:focus, *:focus-visible { outline: none !important; }
@@ -24,7 +24,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Clean Bean" />
-        <meta name="theme-color" content="#F7F2E9" />
+        <meta name="theme-color" content="#DCEBF4" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <ScrollViewStyleReset />

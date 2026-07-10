@@ -206,7 +206,7 @@ export default function AccountSheet({
 }
 
 const s = StyleSheet.create({
-  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(30,25,20,0.55)' },
+  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38,52,63,0.5)' },
   backdropFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
     backgroundColor: '#FFFFFF',
@@ -225,20 +225,20 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
-  closeX: { fontSize: 20, color: '#8A8480', fontFamily: 'Nunito_700Bold' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
+  closeX: { fontSize: 20, color: '#7E95A6', fontFamily: 'Nunito_700Bold' },
 
   note: {
     fontSize: 14,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#8A8480',
+    color: '#7E95A6',
     lineHeight: 20,
     marginBottom: 16,
   },
-  noteStrong: { color: '#33302E', fontFamily: 'Nunito_700Bold' },
+  noteStrong: { color: '#3A4750', fontFamily: 'Nunito_700Bold' },
 
   googleBtn: {
-    backgroundColor: '#4361EE',
+    backgroundColor: '#4E7E9B',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
@@ -246,33 +246,33 @@ const s = StyleSheet.create({
   },
   googleBtnText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Nunito_800ExtraBold' },
 
-  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#8A8480', marginBottom: 6 },
+  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E95A6', marginBottom: 6 },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E5DFD5',
+    borderColor: '#D7E4EE',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#33302E',
+    color: '#3A4750',
     marginBottom: 16,
     minHeight: 48,
   },
   errorText: {
-    color: '#E23D5B',
+    color: '#D96A5B',
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
     marginBottom: 12,
     textAlign: 'center',
   },
   saveBtn: {
-    backgroundColor: '#3FA34D',
+    backgroundColor: '#7FA35C',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
   },
   saveBtnText: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   outlineBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  outlineBtnText: { color: '#3FA34D', fontSize: 15, fontFamily: 'Nunito_700Bold' },
+  outlineBtnText: { color: '#5E8A44', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 });

@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 import AccountSheet from '../components/AccountSheet';
+import Bubbles from '../components/Bubbles';
 import {
   LogEntry,
   Task,
@@ -34,26 +35,26 @@ import { useIosPWAKeyboard } from '../lib/useIosPWAKeyboard';
 // Ordered around the color wheel so neighbors (including last→first wrap)
 // stay distinct.
 const COLORS = [
-  '#F0544F', // coral
-  '#F7B801', // golden
-  '#9BC53D', // lime
-  '#00A896', // teal
-  '#1FA8E0', // cerulean
-  '#4361EE', // blue
-  '#7B61FF', // violet
-  '#A855F7', // purple
-  '#D6499B', // magenta
-  '#EF476F', // watermelon
-  '#F98807', // orange
-  '#35A853', // green
+  '#E08E82', // coral
+  '#E3B368', // honey
+  '#A9C388', // sage
+  '#79B8A2', // seafoam
+  '#7FB3D2', // sky
+  '#5C88AF', // steel blue
+  '#8E8FCB', // periwinkle
+  '#AC85C4', // lilac
+  '#C784AE', // mauve
+  '#DE8398', // rose
+  '#E39B72', // apricot
+  '#8FB56E', // leaf
 ];
 
-// Dark text on light segments (golden, lime), white on the rest.
+// Dark text on light segments, white on the rest.
 function labelColor(hex: string) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? '#4A3B14' : '#FFFFFF';
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? '#3D4A54' : '#FFFFFF';
 }
 
 // Split at the word break that keeps the longer line shortest.
@@ -279,6 +280,7 @@ export default function WheelScreen() {
 
   return (
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
+      <Bubbles />
       <View style={s.content}>
         <View style={s.header}>
           <Text style={s.title}>Clean Bean 🫘</Text>
@@ -336,7 +338,7 @@ export default function WheelScreen() {
           ]}
         >
           <LinearGradient
-            colors={['#F98807', '#EF476F']}
+            colors={['#6FA0BE', '#4E7E9B']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={s.spinBtn}
@@ -467,14 +469,14 @@ export default function WheelScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F7F2E9', paddingHorizontal: 20 },
+  screen: { flex: 1, backgroundColor: '#DCEBF4', paddingHorizontal: 20 },
   content: { flex: 1, width: '100%', maxWidth: 680, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
-  headerAction: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#3FA34D' },
+  title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
+  headerAction: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#5E8A44' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   headerIcon: { fontSize: 20 },
-  subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#8A8480', marginTop: 4 },
+  subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#7E95A6', marginTop: 4 },
 
   wheelArea: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   pointer: {
@@ -488,7 +490,7 @@ const s = StyleSheet.create({
     borderTopWidth: 24,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: '#33302E',
+    borderTopColor: '#3A4750',
     zIndex: 2,
   },
   hub: {
@@ -503,13 +505,13 @@ const s = StyleSheet.create({
 
   treatPill: {
     alignSelf: 'center',
-    backgroundColor: '#FBEED3',
+    backgroundColor: '#FBE7E2',
     borderRadius: 999,
     paddingVertical: 8,
     paddingHorizontal: 18,
     marginBottom: 14,
   },
-  treatPillText: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#8A6A1F' },
+  treatPillText: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#B26558' },
 
   spinWrap: { marginBottom: 24, borderRadius: 999 },
   spinBtn: {
@@ -526,7 +528,7 @@ const s = StyleSheet.create({
 
   backdropCenter: {
     flex: 1,
-    backgroundColor: 'rgba(30,25,20,0.55)',
+    backgroundColor: 'rgba(38,52,63,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 28,
@@ -543,7 +545,7 @@ const s = StyleSheet.create({
   resultLabel: {
     fontSize: 13,
     fontFamily: 'Nunito_700Bold',
-    color: '#8A8480',
+    color: '#7E95A6',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginTop: 8,
@@ -551,7 +553,7 @@ const s = StyleSheet.create({
   resultTask: {
     fontSize: 24,
     fontFamily: 'Nunito_800ExtraBold',
-    color: '#33302E',
+    color: '#3A4750',
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 20,
@@ -559,13 +561,13 @@ const s = StyleSheet.create({
   treatText: {
     fontSize: 15,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#8A8480',
+    color: '#7E95A6',
     textAlign: 'center',
     marginTop: -10,
     marginBottom: 20,
   },
   doneBtn: {
-    backgroundColor: '#3FA34D',
+    backgroundColor: '#7FA35C',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
@@ -574,9 +576,9 @@ const s = StyleSheet.create({
   doneBtnText: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   resultRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
   ghostBtn: { paddingVertical: 10, paddingHorizontal: 16 },
-  ghostBtnText: { color: '#8A8480', fontSize: 15, fontFamily: 'Nunito_700Bold' },
+  ghostBtnText: { color: '#7E95A6', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 
-  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(30,25,20,0.55)' },
+  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38,52,63,0.5)' },
   backdropFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
     backgroundColor: '#FFFFFF',
@@ -595,50 +597,50 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
-  closeX: { fontSize: 20, color: '#8A8480', fontFamily: 'Nunito_700Bold' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
+  closeX: { fontSize: 20, color: '#7E95A6', fontFamily: 'Nunito_700Bold' },
 
   addBtn: {
     borderWidth: 2,
-    borderColor: '#3FA34D',
+    borderColor: '#7FA35C',
     borderStyle: 'dashed',
     borderRadius: 14,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 10,
   },
-  addBtnText: { color: '#3FA34D', fontSize: 16, fontFamily: 'Nunito_700Bold' },
+  addBtnText: { color: '#5E8A44', fontSize: 16, fontFamily: 'Nunito_700Bold' },
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 13,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2EDE4',
+    borderBottomColor: '#EAF1F6',
   },
   taskDot: { width: 12, height: 12, borderRadius: 6, marginRight: 12 },
-  taskRowText: { flex: 1, fontSize: 16, fontFamily: 'Nunito_600SemiBold', color: '#33302E' },
-  taskRowChevron: { fontSize: 20, color: '#C9C3BC' },
+  taskRowText: { flex: 1, fontSize: 16, fontFamily: 'Nunito_600SemiBold', color: '#3A4750' },
+  taskRowChevron: { fontSize: 20, color: '#B9CBD8' },
   emptyText: {
     textAlign: 'center',
-    color: '#8A8480',
+    color: '#7E95A6',
     paddingVertical: 24,
     fontSize: 15,
     fontFamily: 'Nunito_600SemiBold',
   },
 
-  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#8A8480', marginBottom: 6 },
+  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E95A6', marginBottom: 6 },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E5DFD5',
+    borderColor: '#D7E4EE',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#33302E',
+    color: '#3A4750',
     marginBottom: 16,
     minHeight: 48,
   },
   deleteBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  deleteBtnText: { color: '#E23D5B', fontSize: 15, fontFamily: 'Nunito_700Bold' },
+  deleteBtnText: { color: '#D96A5B', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 });

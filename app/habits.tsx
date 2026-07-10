@@ -29,6 +29,7 @@ import {
   uid,
 } from '../lib/storage';
 import { useIosPWAKeyboard } from '../lib/useIosPWAKeyboard';
+import Bubbles from '../components/Bubbles';
 
 // The hero card's big button: a bean waiting in a dashed slot, gently
 // pulsing until it's tapped, then a solid green check.
@@ -240,6 +241,7 @@ export default function HabitsScreen() {
 
   return (
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
+      <Bubbles />
       <View style={s.content}>
       <View style={s.header}>
         <Text style={s.title}>
@@ -483,11 +485,11 @@ export default function HabitsScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F7F2E9', paddingHorizontal: 20 },
+  screen: { flex: 1, backgroundColor: '#DCEBF4', paddingHorizontal: 20 },
   content: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
-  subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#8A8480', marginTop: 4 },
+  title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
+  subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#7E95A6', marginTop: 4 },
 
   // ---- hero (single habit) ----
   heroCard: {
@@ -507,13 +509,13 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: 24,
     fontFamily: 'Nunito_800ExtraBold',
-    color: '#33302E',
+    color: '#3A4750',
     textAlign: 'center',
   },
   heroEdit: {
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
-    color: '#3FA34D',
+    color: '#5E8A44',
     textAlign: 'right',
   },
   heroCheck: {
@@ -522,15 +524,15 @@ const s = StyleSheet.create({
     borderRadius: 48,
     borderWidth: 3,
     borderStyle: 'dashed',
-    borderColor: '#D8D2C8',
-    backgroundColor: '#F7F2E9',
+    borderColor: '#C6D9E5',
+    backgroundColor: '#EAF3F9',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
   },
   heroCheckOn: {
-    backgroundColor: '#3FA34D',
-    borderColor: '#3FA34D',
+    backgroundColor: '#7FA35C',
+    borderColor: '#7FA35C',
     borderStyle: 'solid',
   },
   heroCheckMark: { color: '#FFFFFF', fontSize: 44, fontFamily: 'Nunito_800ExtraBold' },
@@ -538,7 +540,7 @@ const s = StyleSheet.create({
   heroCheckLabel: {
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
-    color: '#8A8480',
+    color: '#7E95A6',
     marginTop: 10,
   },
   heroDots: { alignItems: 'center', marginTop: 16, gap: 2 },
@@ -546,7 +548,7 @@ const s = StyleSheet.create({
     width: 13,
     height: 13,
     borderRadius: 6.5,
-    backgroundColor: '#EDE7DC',
+    backgroundColor: '#E0EBF3',
   },
   statsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   statTile: {
@@ -556,8 +558,8 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  statNum: { fontSize: 24, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
-  statLabel: { fontSize: 12, fontFamily: 'Nunito_700Bold', color: '#8A8480', marginTop: 2 },
+  statNum: { fontSize: 24, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
+  statLabel: { fontSize: 12, fontFamily: 'Nunito_700Bold', color: '#7E95A6', marginTop: 2 },
 
   // ---- medium (2-3 habits) ----
   card: {
@@ -582,7 +584,7 @@ const s = StyleSheet.create({
   compactTreat: {
     fontSize: 13,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#8A6A1F',
+    color: '#B26558',
     marginTop: 3,
   },
 
@@ -591,57 +593,57 @@ const s = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 2,
-    borderColor: '#D8D2C8',
+    borderColor: '#C6D9E5',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  checkOn: { backgroundColor: '#3FA34D', borderColor: '#3FA34D' },
+  checkOn: { backgroundColor: '#7FA35C', borderColor: '#7FA35C' },
   checkMark: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   cardBody: { flex: 1 },
-  cardLabel: { fontSize: 17, fontFamily: 'Nunito_700Bold', color: '#33302E' },
-  cardLabelDone: { color: '#A39D95', textDecorationLine: 'line-through' },
+  cardLabel: { fontSize: 17, fontFamily: 'Nunito_700Bold', color: '#3A4750' },
+  cardLabelDone: { color: '#9FB4C2', textDecorationLine: 'line-through' },
   dotsRow: { flexDirection: 'row', gap: 5, marginTop: 6 },
   dot: {
     width: 9,
     height: 9,
     borderRadius: 4.5,
-    backgroundColor: '#EDE7DC',
+    backgroundColor: '#E0EBF3',
   },
-  dotOn: { backgroundColor: '#3FA34D' },
-  dotToday: { borderWidth: 1.5, borderColor: '#33302E' },
-  streak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#E8960C', marginLeft: 8 },
+  dotOn: { backgroundColor: '#7FA35C' },
+  dotToday: { borderWidth: 1.5, borderColor: '#3A4750' },
+  streak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#DE9159', marginLeft: 8 },
 
   pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   treatPill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FBEED3',
+    backgroundColor: '#FBE7E2',
     borderRadius: 999,
     paddingVertical: 5,
     paddingHorizontal: 12,
     marginTop: 9,
   },
-  treatPillText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A6A1F' },
+  treatPillText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#B26558' },
   treatPillEmpty: {
     alignSelf: 'flex-start',
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#D8D2C8',
+    borderColor: '#C6D9E5',
     borderRadius: 999,
     paddingVertical: 4,
     paddingHorizontal: 12,
     marginTop: 9,
   },
-  treatPillEmptyText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A8480' },
+  treatPillEmptyText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#7E95A6' },
   pairPill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E4EFF9',
+    backgroundColor: '#E3EEF6',
     borderRadius: 999,
     paddingVertical: 5,
     paddingHorizontal: 12,
     marginTop: 9,
   },
-  pairPillText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#3C6E91' },
+  pairPillText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#4E7E9B' },
 
   unlockCard: {
     backgroundColor: '#FFFFFF',
@@ -650,25 +652,25 @@ const s = StyleSheet.create({
     marginTop: 8,
     alignItems: 'center',
   },
-  unlockTitle: { fontSize: 18, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
+  unlockTitle: { fontSize: 18, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
   unlockBody: {
     fontSize: 14,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#8A8480',
+    color: '#7E95A6',
     textAlign: 'center',
     marginTop: 6,
     marginBottom: 14,
     lineHeight: 20,
   },
   unlockBtn: {
-    backgroundColor: '#3FA34D',
+    backgroundColor: '#7FA35C',
     borderRadius: 999,
     paddingVertical: 12,
     paddingHorizontal: 24,
   },
   unlockBtnText: { color: '#FFFFFF', fontSize: 15, fontFamily: 'Nunito_800ExtraBold' },
   notNowText: {
-    color: '#8A8480',
+    color: '#7E95A6',
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
     paddingVertical: 10,
@@ -677,7 +679,7 @@ const s = StyleSheet.create({
 
   backdropCenter: {
     flex: 1,
-    backgroundColor: 'rgba(30,25,20,0.55)',
+    backgroundColor: 'rgba(38,52,63,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 28,
@@ -694,15 +696,15 @@ const s = StyleSheet.create({
   celebrateTitle: {
     fontSize: 21,
     fontFamily: 'Nunito_800ExtraBold',
-    color: '#33302E',
+    color: '#3A4750',
     textAlign: 'center',
     marginTop: 8,
   },
-  celebrateStreak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#E8960C', marginTop: 8 },
+  celebrateStreak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#DE9159', marginTop: 8 },
   celebrateTreatLabel: {
     fontSize: 13,
     fontFamily: 'Nunito_700Bold',
-    color: '#8A8480',
+    color: '#7E95A6',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginTop: 16,
@@ -710,13 +712,13 @@ const s = StyleSheet.create({
   celebrateTreat: {
     fontSize: 18,
     fontFamily: 'Nunito_700Bold',
-    color: '#33302E',
+    color: '#3A4750',
     textAlign: 'center',
     marginTop: 4,
     marginBottom: 8,
   },
 
-  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(30,25,20,0.55)' },
+  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38,52,63,0.5)' },
   backdropFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
     backgroundColor: '#FFFFFF',
@@ -735,38 +737,38 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#33302E' },
-  closeX: { fontSize: 20, color: '#8A8480', fontFamily: 'Nunito_700Bold' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
+  closeX: { fontSize: 20, color: '#7E95A6', fontFamily: 'Nunito_700Bold' },
 
-  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#8A8480', marginBottom: 6 },
+  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E95A6', marginBottom: 6 },
   inputHelper: {
     fontSize: 13,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#B8B2AC',
+    color: '#9FB4C2',
     marginBottom: 8,
     lineHeight: 18,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E5DFD5',
+    borderColor: '#D7E4EE',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#33302E',
+    color: '#3A4750',
     marginBottom: 16,
     minHeight: 48,
   },
   formError: {
-    color: '#E23D5B',
+    color: '#D96A5B',
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   saveBtn: {
-    backgroundColor: '#3FA34D',
+    backgroundColor: '#7FA35C',
     borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
@@ -775,5 +777,5 @@ const s = StyleSheet.create({
   },
   saveBtnText: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   deleteBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  deleteBtnText: { color: '#E23D5B', fontSize: 15, fontFamily: 'Nunito_700Bold' },
+  deleteBtnText: { color: '#D96A5B', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 });
