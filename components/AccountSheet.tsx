@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   createUserWithEmailAndPassword,
   EmailAuthProvider,
@@ -16,6 +17,7 @@ import {
 } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import {
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -195,11 +197,17 @@ export default function AccountSheet({
         <Pressable style={s.backdropFill} onPress={onClose} />
         <View style={[s.sheet, { paddingBottom: insets.bottom + 24 + iosPWAKeyboard }]}>
           <View style={s.sheetHeader}>
-            <Text style={s.sheetTitle}>Account</Text>
+            <Text style={s.sheetTitle}>Your cozy corner</Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <Text style={s.closeX}>✕</Text>
             </Pressable>
           </View>
+
+          <Image
+            source={require('../assets/mascot/bean-cozy.png')}
+            style={s.mascot}
+            resizeMode="contain"
+          />
 
           <ScrollView keyboardShouldPersistTaps="handled" style={{ flexGrow: 0 }}>
             {!firebaseReady ? (
@@ -212,7 +220,7 @@ export default function AccountSheet({
                 <Text style={s.note}>
                   Signed in as{' '}
                   <Text style={s.noteStrong}>{user.email ?? 'your Google account'}</Text>
-                  . Your data syncs to the cloud automatically.
+                  . Your beans sync to the cloud automatically 🌱
                 </Text>
                 <Pressable style={s.outlineBtn} onPress={doSignOut} disabled={busy}>
                   <Text style={s.outlineBtnText}>Sign out</Text>
@@ -221,14 +229,15 @@ export default function AccountSheet({
             ) : (
               <>
                 <Text style={s.note}>
-                  You’re in guest mode — everything is saved and synced, but
-                  it’s tied to this device. Add a sign-in to keep your data
-                  safe and use it on other devices.
+                  You’re in guest mode — everything’s saved snug on this
+                  device. Sign in to keep your beans safe everywhere.
                 </Text>
 
                 {Platform.OS === 'web' && (
-                  <Pressable style={s.googleBtn} onPress={googleSignIn} disabled={busy}>
-                    <Text style={s.googleBtnText}>Continue with Google</Text>
+                  <Pressable onPress={googleSignIn} disabled={busy} style={s.googleBtnWrap}>
+                    <View style={s.googleBtn}>
+                      <Text style={s.googleBtnText}>Continue with Google</Text>
+                    </View>
                   </Pressable>
                 )}
 
@@ -240,6 +249,8 @@ export default function AccountSheet({
                   autoCapitalize="none"
                   keyboardType="email-address"
                   autoComplete="email"
+                  placeholder="you@example.com"
+                  placeholderTextColor="#C9BBA3"
                 />
                 <Text style={s.inputLabel}>Password</Text>
                 <TextInput
@@ -248,10 +259,19 @@ export default function AccountSheet({
                   onChangeText={setPassword}
                   secureTextEntry
                   autoComplete="password"
+                  placeholder="••••••••"
+                  placeholderTextColor="#C9BBA3"
                 />
                 {!!error && <Text style={s.errorText}>{error}</Text>}
-                <Pressable style={s.saveBtn} onPress={emailCreate} disabled={busy}>
-                  <Text style={s.saveBtnText}>Create account</Text>
+                <Pressable onPress={emailCreate} disabled={busy}>
+                  <LinearGradient
+                    colors={['#9BC178', '#6F9E4C']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={s.saveBtn}
+                  >
+                    <Text style={s.saveBtnText}>Create account</Text>
+                  </LinearGradient>
                 </Pressable>
                 <Pressable style={s.outlineBtn} onPress={emailSignIn} disabled={busy}>
                   <Text style={s.outlineBtnText}>Sign in to an existing account</Text>
@@ -266,15 +286,15 @@ export default function AccountSheet({
 }
 
 const s = StyleSheet.create({
-  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38,52,63,0.5)' },
+  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(74,59,44,0.5)' },
   backdropFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
+    backgroundColor: '#FCF6EA',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 22,
     paddingTop: 18,
-    maxHeight: '85%',
+    maxHeight: '88%',
     width: '100%',
     maxWidth: 560,
     alignSelf: 'center',
@@ -283,56 +303,65 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 6,
   },
-  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
-  closeX: { fontSize: 20, color: '#7E95A6', fontFamily: 'Nunito_700Bold' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#4A3B2C' },
+  closeX: { fontSize: 18, color: '#8A7A68', fontFamily: 'Nunito_800ExtraBold' },
+
+  mascot: { width: 128, height: 128, alignSelf: 'center', marginBottom: 4, borderRadius: 24 },
 
   note: {
     fontSize: 14,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#7E95A6',
+    color: '#8A7A68',
     lineHeight: 20,
     marginBottom: 16,
+    backgroundColor: '#F1E9D8',
+    borderRadius: 18,
+    padding: 14,
   },
-  noteStrong: { color: '#3A4750', fontFamily: 'Nunito_700Bold' },
+  noteStrong: { color: '#4A3B2C', fontFamily: 'Nunito_700Bold' },
 
+  googleBtnWrap: { marginBottom: 16 },
   googleBtn: {
     backgroundColor: '#4E7E9B',
     borderRadius: 999,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginBottom: 16,
   },
   googleBtnText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Nunito_800ExtraBold' },
 
-  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E95A6', marginBottom: 6 },
+  inputLabel: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A7A68', marginBottom: 6 },
   input: {
     borderWidth: 1.5,
-    borderColor: '#D7E4EE',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderColor: '#E6D9C4',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    fontSize: 15,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#3A4750',
+    color: '#4A3B2C',
     marginBottom: 16,
     minHeight: 48,
   },
   errorText: {
-    color: '#D96A5B',
+    color: '#C4645A',
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
     marginBottom: 12,
     textAlign: 'center',
   },
   saveBtn: {
-    backgroundColor: '#7FA35C',
     borderRadius: 999,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: 'center',
+    shadowColor: '#6F9E4C',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
   },
-  saveBtnText: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
+  saveBtnText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Nunito_800ExtraBold' },
   outlineBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
   outlineBtnText: { color: '#5E8A44', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 });

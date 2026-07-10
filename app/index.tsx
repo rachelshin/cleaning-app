@@ -3,6 +3,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -32,29 +33,30 @@ import {
 } from '../lib/storage';
 import { useIosPWAKeyboard } from '../lib/useIosPWAKeyboard';
 
-// Ordered around the color wheel so neighbors (including last→first wrap)
-// stay distinct.
+// Clean Bean pastel garden palette — ordered around the wheel so
+// neighbors (including last→first wrap) stay visually distinct.
 const COLORS = [
-  '#E08E82', // coral
-  '#E3B368', // honey
-  '#A9C388', // sage
-  '#79B8A2', // seafoam
-  '#7FB3D2', // sky
-  '#5C88AF', // steel blue
-  '#8E8FCB', // periwinkle
-  '#AC85C4', // lilac
-  '#C784AE', // mauve
-  '#DE8398', // rose
-  '#E39B72', // apricot
-  '#8FB56E', // leaf
+  '#F6C9B8', // peach
+  '#BFE0EE', // sky
+  '#B9D49B', // sage
+  '#F4B8C4', // blush
+  '#F0C86B', // gold
+  '#CBB8E8', // lilac
+  '#F3D6A8', // honey
+  '#A9D6C9', // seafoam
+  '#F1AFA0', // coral
+  '#C6D9F0', // periwinkle
+  '#E2C7D8', // mauve
+  '#D7E3B0', // leaf
 ];
 
-// Dark text on light segments, white on the rest.
+// Nearly everything here is pastel-light, so warm brown text reads best
+// almost always — this only flips for the rare darker segment.
 function labelColor(hex: string) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? '#3D4A54' : '#FFFFFF';
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '#5B4636' : '#FFFFFF';
 }
 
 // Split at the word break that keeps the longer line shortest.
@@ -86,14 +88,14 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
     C + r * Math.sin(rad(a)),
   ];
   const baseFontSize = Math.max(13, Math.min(19, size * 0.05));
-  const hubR = size * 0.07;
+  const hubR = size * 0.09;
   // Radial room a label can occupy: from just outside the hub to the rim.
   const availLen = R * 0.93 - hubR - 10;
 
   return (
     <Svg width={size} height={size}>
       {n === 1 ? (
-        <Circle cx={C} cy={C} r={R} fill={COLORS[0]} stroke="#FFFFFF" strokeWidth={2} />
+        <Circle cx={C} cy={C} r={R} fill={COLORS[0]} stroke="#FFFFFF" strokeWidth={4} />
       ) : (
         tasks.map((t, i) => {
           const a0 = i * per - 90;
@@ -105,7 +107,7 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
               d={`M ${C} ${C} L ${x0} ${y0} A ${R} ${R} 0 ${per > 180 ? 1 : 0} 1 ${x1} ${y1} Z`}
               fill={COLORS[i % COLORS.length]}
               stroke="#FFFFFF"
-              strokeWidth={2}
+              strokeWidth={4}
             />
           );
         })
@@ -116,10 +118,6 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
         // Flip labels on the left half so they never render upside down.
         const flip = norm > 90 && norm < 270;
         const angle = flip ? mid + 180 : mid;
-        // Labels anchor at the rim and run inward along their spoke
-        // (~0.54em average glyph width for Nunito). If a label is too long
-        // for the base size on one line, wrap it to two lines so the font
-        // can stay big; only shrink below base as a last resort.
         const [lx, ly] = pt(mid, R * 0.93);
         const fill = labelColor(COLORS[i % COLORS.length]);
         const oneLineFs = availLen / (t.label.length * 0.54);
@@ -283,20 +281,24 @@ export default function WheelScreen() {
       <Bubbles />
       <View style={s.content}>
         <View style={s.header}>
-          <Text style={s.title}>Clean Bean 🫘</Text>
+          <Text style={s.title}>clean bean</Text>
           <View style={s.headerRight}>
             <Pressable onPress={() => setManageOpen(true)} hitSlop={8}>
               <Text style={s.headerAction}>Edit tasks</Text>
             </Pressable>
-            <Pressable onPress={() => setAccountOpen(true)} hitSlop={8}>
-              <Text style={s.headerIcon}>👤</Text>
+            <Pressable onPress={() => setAccountOpen(true)} hitSlop={8} style={s.avatarBtn}>
+              <Image
+                source={require('../assets/mascot/bean-avatar.png')}
+                style={s.avatarImg}
+                resizeMode="contain"
+              />
             </Pressable>
           </View>
         </View>
         <Text style={s.subtitle}>
           {doneThisWeek > 0
             ? `✨ ${doneThisWeek} bean${doneThisWeek === 1 ? '' : 's'} earned this week`
-            : 'What’ll it bean today? Spin to find out'}
+            : "What'll it bean today? Spin to find out 🌿"}
         </Text>
 
         <View
@@ -314,8 +316,14 @@ export default function WheelScreen() {
               <Animated.View style={{ transform: [{ rotate: spinDeg }] }}>
                 <WheelFace tasks={tasks} size={size} />
               </Animated.View>
-              <View pointerEvents="none" style={s.hub}>
-                <Text style={{ fontSize: size * 0.075 }}>🫘</Text>
+              <View pointerEvents="none" style={[s.hub, { width: size, height: size }]}>
+                <View style={s.hubBadge}>
+                  <Image
+                    source={require('../assets/mascot/bean-avatar.png')}
+                    style={{ width: size * 0.11, height: size * 0.11 }}
+                    resizeMode="contain"
+                  />
+                </View>
               </View>
             </View>
           )}
@@ -334,16 +342,17 @@ export default function WheelScreen() {
           disabled={spinning || tasks.length === 0}
           style={({ pressed }) => [
             s.spinWrap,
-            (pressed || spinning) && { opacity: 0.75 },
+            (pressed || spinning) && { transform: [{ scale: 0.97 }], opacity: 0.9 },
           ]}
         >
           <LinearGradient
-            colors={['#6FA0BE', '#4E7E9B']}
+            colors={['#9BC178', '#6F9E4C']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={s.spinBtn}
           >
-            <Text style={s.spinBtnText}>{spinning ? 'Spinning…' : 'SPIN'}</Text>
+            <Text style={s.spinBtnText}>{spinning ? 'SPINNING…' : 'SPIN'}</Text>
+            <Text style={s.spinSparkle}>✨</Text>
           </LinearGradient>
         </Pressable>
       </View>
@@ -352,14 +361,27 @@ export default function WheelScreen() {
       <Modal visible={!!result} transparent animationType="fade" onRequestClose={() => setResult(null)}>
         <View style={s.backdropCenter}>
           <View style={s.resultCard}>
-            <Text style={s.resultEmoji}>🎯</Text>
+            <Text style={s.confettiA}>🎊</Text>
+            <Text style={s.confettiB}>🎉</Text>
+            <Image
+              source={require('../assets/mascot/bean-bubbles.png')}
+              style={s.resultMascot}
+              resizeMode="contain"
+            />
             <Text style={s.resultLabel}>Your mission</Text>
             <Text style={s.resultTask}>{result?.label}</Text>
             {!!treat.trim() && (
               <Text style={s.treatText}>Then treat yourself: {treat} 🍬</Text>
             )}
-            <Pressable style={s.doneBtn} onPress={markDone}>
-              <Text style={s.doneBtnText}>Done! 🎉</Text>
+            <Pressable onPress={markDone}>
+              <LinearGradient
+                colors={['#9BC178', '#6F9E4C']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.doneBtn}
+              >
+                <Text style={s.doneBtnText}>Done! 🎉</Text>
+              </LinearGradient>
             </Pressable>
             <View style={s.resultRow}>
               <Pressable
@@ -410,6 +432,8 @@ export default function WheelScreen() {
                     saveTreat(v);
                   }}
                   returnKeyType="done"
+                  placeholder="Movie night, a treat, a nap…"
+                  placeholderTextColor="#C9BBA3"
                 />
                 <Pressable
                   style={s.addBtn}
@@ -449,8 +473,15 @@ export default function WheelScreen() {
                   onSubmitEditing={saveDraft}
                   returnKeyType="done"
                 />
-                <Pressable style={s.doneBtn} onPress={saveDraft}>
-                  <Text style={s.doneBtnText}>{editing ? 'Save' : 'Add to wheel'}</Text>
+                <Pressable onPress={saveDraft}>
+                  <LinearGradient
+                    colors={['#9BC178', '#6F9E4C']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={s.doneBtn}
+                  >
+                    <Text style={s.doneBtnText}>{editing ? 'Save' : 'Add to wheel'}</Text>
+                  </LinearGradient>
                 </Pressable>
                 {editing && (
                   <Pressable style={s.deleteBtn} onPress={deleteEditing}>
@@ -469,19 +500,30 @@ export default function WheelScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#DCEBF4', paddingHorizontal: 20 },
+  screen: { flex: 1, backgroundColor: '#CDE8F3', paddingHorizontal: 20 },
   content: { flex: 1, width: '100%', maxWidth: 680, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
+  title: { fontSize: 22, fontFamily: 'Nunito_800ExtraBold', color: '#5B4636', letterSpacing: 0.2 },
   headerAction: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#5E8A44' },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  headerIcon: { fontSize: 20 },
-  subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#7E95A6', marginTop: 4 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  avatarBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#F6C9B8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: { width: 32, height: 32, marginTop: 5 },
+  subtitle: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E9A5E', marginTop: 6 },
 
   wheelArea: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   pointer: {
     position: 'absolute',
-    top: -8,
+    top: -10,
     alignSelf: 'center',
     width: 0,
     height: 0,
@@ -490,34 +532,50 @@ const s = StyleSheet.create({
     borderTopWidth: 24,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: '#3A4750',
+    borderTopColor: '#5B4636',
     zIndex: 2,
   },
   hub: {
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  hubBadge: {
+    width: '18%',
+    aspectRatio: 1,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#5B4636',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
 
   treatPill: {
     alignSelf: 'center',
     backgroundColor: '#FBE7E2',
     borderRadius: 999,
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    marginBottom: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   treatPillText: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#B26558' },
 
   spinWrap: { marginBottom: 24, borderRadius: 999 },
   spinBtn: {
     borderRadius: 999,
-    paddingVertical: 18,
+    paddingVertical: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    shadowColor: '#6F9E4C',
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
   },
   spinBtnText: {
     color: '#FFFFFF',
@@ -525,65 +583,72 @@ const s = StyleSheet.create({
     fontFamily: 'Nunito_800ExtraBold',
     letterSpacing: 3,
   },
+  spinSparkle: { position: 'absolute', top: 10, right: 26, fontSize: 14 },
 
   backdropCenter: {
     flex: 1,
-    backgroundColor: 'rgba(38,52,63,0.5)',
+    backgroundColor: 'rgba(74,59,44,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 28,
   },
   resultCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 32,
+    padding: 26,
     width: '100%',
     maxWidth: 360,
     alignItems: 'center',
+    position: 'relative',
   },
-  resultEmoji: { fontSize: 44 },
+  confettiA: { position: 'absolute', top: 14, left: 22, fontSize: 16 },
+  confettiB: { position: 'absolute', top: 8, right: 26, fontSize: 18 },
+  resultMascot: { width: 116, height: 116, marginTop: 4 },
   resultLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'Nunito_700Bold',
-    color: '#7E95A6',
+    color: '#8A7A68',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    marginTop: 8,
+    marginTop: 6,
   },
   resultTask: {
-    fontSize: 24,
+    fontSize: 25,
     fontFamily: 'Nunito_800ExtraBold',
-    color: '#3A4750',
+    color: '#4A3B2C',
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 20,
+    marginTop: 6,
+    marginBottom: 18,
   },
   treatText: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#7E95A6',
+    color: '#8A7A68',
     textAlign: 'center',
-    marginTop: -10,
-    marginBottom: 20,
+    marginTop: -12,
+    marginBottom: 18,
   },
   doneBtn: {
-    backgroundColor: '#7FA35C',
     borderRadius: 999,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: 'center',
     alignSelf: 'stretch',
+    shadowColor: '#6F9E4C',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
   },
   doneBtnText: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
-  resultRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
+  resultRow: { flexDirection: 'row', gap: 20, marginTop: 14 },
   ghostBtn: { paddingVertical: 10, paddingHorizontal: 16 },
-  ghostBtnText: { color: '#7E95A6', fontSize: 15, fontFamily: 'Nunito_700Bold' },
+  ghostBtnText: { color: '#8A7A68', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 
-  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38,52,63,0.5)' },
+  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(74,59,44,0.5)' },
   backdropFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: '#FCF6EA',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: 20,
     paddingTop: 18,
     maxHeight: '85%',
@@ -597,17 +662,17 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
-  closeX: { fontSize: 20, color: '#7E95A6', fontFamily: 'Nunito_700Bold' },
+  sheetTitle: { fontSize: 19, fontFamily: 'Nunito_800ExtraBold', color: '#4A3B2C' },
+  closeX: { fontSize: 18, color: '#8A7A68', fontFamily: 'Nunito_800ExtraBold' },
 
   addBtn: {
     borderWidth: 2,
     borderColor: '#7FA35C',
     borderStyle: 'dashed',
-    borderRadius: 14,
-    paddingVertical: 12,
+    borderRadius: 18,
+    paddingVertical: 13,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   addBtnText: { color: '#5E8A44', fontSize: 16, fontFamily: 'Nunito_700Bold' },
   taskRow: {
@@ -615,32 +680,33 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 13,
     borderBottomWidth: 1,
-    borderBottomColor: '#EAF1F6',
+    borderBottomColor: '#F1E7D3',
   },
-  taskDot: { width: 12, height: 12, borderRadius: 6, marginRight: 12 },
-  taskRowText: { flex: 1, fontSize: 16, fontFamily: 'Nunito_600SemiBold', color: '#3A4750' },
-  taskRowChevron: { fontSize: 20, color: '#B9CBD8' },
+  taskDot: { width: 14, height: 14, borderRadius: 7, marginRight: 12 },
+  taskRowText: { flex: 1, fontSize: 16, fontFamily: 'Nunito_600SemiBold', color: '#4A3B2C' },
+  taskRowChevron: { fontSize: 20, color: '#D9C9AE' },
   emptyText: {
     textAlign: 'center',
-    color: '#7E95A6',
+    color: '#8A7A68',
     paddingVertical: 24,
     fontSize: 15,
     fontFamily: 'Nunito_600SemiBold',
   },
 
-  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E95A6', marginBottom: 6 },
+  inputLabel: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A7A68', marginBottom: 6 },
   input: {
     borderWidth: 1.5,
-    borderColor: '#D7E4EE',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: '#E6D9C4',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
     fontSize: 16,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#3A4750',
+    color: '#4A3B2C',
     marginBottom: 16,
     minHeight: 48,
   },
   deleteBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  deleteBtnText: { color: '#D96A5B', fontSize: 15, fontFamily: 'Nunito_700Bold' },
+  deleteBtnText: { color: '#C4645A', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 });

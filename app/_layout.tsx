@@ -31,10 +31,15 @@ export default function RootLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#3A4750',
-          tabBarInactiveTintColor: '#A8BCCA',
-          tabBarStyle: { backgroundColor: '#FFFFFF', borderTopColor: '#DCE7EF' },
-          tabBarLabelStyle: { fontFamily: 'Nunito_700Bold' },
+          tabBarActiveTintColor: '#5E8A44',
+          tabBarInactiveTintColor: '#C9BBA3',
+          tabBarStyle: {
+            backgroundColor: '#FCF6EA',
+            borderTopColor: '#F1E7D3',
+            height: 74,
+            paddingTop: 8,
+          },
+          tabBarLabelStyle: { fontFamily: 'Nunito_800ExtraBold', fontSize: 12 },
         }}
       >
         <Tabs.Screen
@@ -42,7 +47,7 @@ export default function RootLayout() {
           options={{
             title: 'Wheel',
             tabBarIcon: ({ focused }) => (
-              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>🎡</Text>
+              <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.45 }}>🎡</Text>
             ),
           }}
         />
@@ -51,7 +56,7 @@ export default function RootLayout() {
           options={{
             title: 'Habits',
             tabBarIcon: ({ focused }) => (
-              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>🌱</Text>
+              <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.45 }}>🌱</Text>
             ),
           }}
         />

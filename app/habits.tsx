@@ -1,7 +1,9 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -12,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import {
   bestStreak,
   dayChance,
@@ -31,8 +34,8 @@ import {
 import { useIosPWAKeyboard } from '../lib/useIosPWAKeyboard';
 import Bubbles from '../components/Bubbles';
 
-// The hero card's big button: a bean waiting in a dashed slot, gently
-// pulsing until it's tapped, then a solid green check.
+// The hero card's big button: a heart waiting in a dashed slot, gently
+// pulsing until it's tapped, then a solid green heart with a sparkle burst.
 function HeroCheck({ done, onPress }: { done: boolean; onPress: () => void }) {
   const pulse = useRef(new Animated.Value(1)).current;
 
@@ -70,10 +73,51 @@ function HeroCheck({ done, onPress }: { done: boolean; onPress: () => void }) {
           { transform: [{ scale: pulse }] },
         ]}
       >
-        <Text style={done ? s.heroCheckMark : s.heroCheckBean}>
-          {done ? '✓' : '🫘'}
-        </Text>
+        <Text style={done ? s.heroCheckMark : s.heroCheckHeart}>{done ? '♥' : '♡'}</Text>
+        {done && (
+          <>
+            <Text style={s.heroSparkleA}>✨</Text>
+            <Text style={s.heroSparkleB}>✨</Text>
+          </>
+        )}
       </Animated.View>
+    </Pressable>
+  );
+}
+
+// A little vine that grows along the last 14 days: a leaf for every day
+// done, a bare twig for every day missed — so the habit's own history
+// reads as a tiny garden instead of a progress bar.
+function VineProgress({ done }: { done: Record<string, boolean> }) {
+  const days = lastNDays(14);
+  return (
+    <View style={{ marginTop: 18 }}>
+      <Svg width="100%" height={40} viewBox="0 0 340 40">
+        <Path
+          d="M6 26 Q 30 8, 55 22 T 105 20 T 155 24 T 205 16 T 255 22 T 305 14 T 334 20"
+          fill="none"
+          stroke="#B98A63"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+        />
+      </Svg>
+      <View style={s.vineRow}>
+        {days.map((d) => (
+          <Text key={d} style={[s.vineLeaf, { opacity: done[d] ? 1 : 0.3 }]}>
+            {done[d] ? '🍃' : '·'}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// Small heart checkbox used by the trellis-style rows (medium / compact
+// tiers): outline when untouched, solid green + filled heart when done.
+function HeartCheck({ done, onPress }: { done: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} hitSlop={8} style={[s.check, done && s.checkOn]}>
+      <Text style={[s.checkGlyph, done && s.checkGlyphOn]}>{done ? '♥' : '♡'}</Text>
     </Pressable>
   );
 }
@@ -112,7 +156,6 @@ export default function HabitsScreen() {
   };
 
   const today = todayStr();
-  const days = lastNDays(14);
   const doneToday = habits.filter((h) => h.done[today]).length;
   const streaks = habits.map((h) => streak(h.done));
   // Quiet suggestion: only once every habit has held a solid streak, and
@@ -192,7 +235,7 @@ export default function HabitsScreen() {
 
   const subtitle =
     habits.length === 0
-      ? 'Every big bean starts as a tiny sprout'
+      ? 'Every big bean starts as a tiny sprout 🌱'
       : doneToday === habits.length
         ? 'All done for today, human bean ✨'
         : habits.length === 1
@@ -200,26 +243,7 @@ export default function HabitsScreen() {
           : `${doneToday} of ${habits.length} beans done today`;
 
   // One habit gets the full hero treatment; cards simplify as more exist.
-  const tier: 'hero' | 'medium' | 'compact' =
-    habits.length <= 1 ? 'hero' : habits.length <= 3 ? 'medium' : 'compact';
-
-  const renderDots = (h: Habit, dotStyle: object, dotOnStyle: object) => (
-    <>
-      <View style={s.dotsRow}>
-        {days.slice(0, 7).map((d) => (
-          <View key={d} style={[dotStyle, h.done[d] && dotOnStyle]} />
-        ))}
-      </View>
-      <View style={s.dotsRow}>
-        {days.slice(7).map((d) => (
-          <View
-            key={d}
-            style={[dotStyle, h.done[d] && dotOnStyle, d === today && s.dotToday]}
-          />
-        ))}
-      </View>
-    </>
-  );
+  const tier: 'hero' | 'list' = habits.length <= 1 ? 'hero' : 'list';
 
   const treatPill = (h: Habit) =>
     h.reward ? (
@@ -232,163 +256,181 @@ export default function HabitsScreen() {
       </View>
     );
 
-  const pairPill = (h: Habit) =>
-    h.pairing ? (
-      <View style={s.pairPill}>
-        <Text style={s.pairPillText}>🎧 {h.pairing}</Text>
-      </View>
-    ) : null;
-
   return (
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
       <Bubbles />
       <View style={s.content}>
-      <View style={s.header}>
-        <Text style={s.title}>
-          {habits.length > 1 ? 'Daily Beans 🌱' : 'Daily Bean 🌱'}
-        </Text>
-      </View>
-      <Text style={s.subtitle}>{subtitle}</Text>
+        <View style={s.header}>
+          <Text style={s.title}>
+            {habits.length > 1 ? 'Daily Beans 🌱' : 'Daily Bean 🌱'}
+          </Text>
+        </View>
+        <Text style={s.subtitle}>{subtitle}</Text>
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 24, paddingTop: 16 }}
-      >
-        {tier === 'hero' &&
-          habits.map((h) => {
-            const isDone = !!h.done[today];
-            const streakCount = streak(h.done);
-            const total = Object.keys(h.done).filter((d) => h.done[d]).length;
-            return (
-              <View key={h.id}>
-                <View style={s.heroCard}>
-                  <View style={s.heroTop}>
-                    <View style={{ width: 40 }} />
-                    <Text style={s.heroName}>{h.label}</Text>
-                    <Pressable onPress={() => openEdit(h)} hitSlop={8} style={{ width: 40 }}>
-                      <Text style={s.heroEdit}>Edit</Text>
-                    </Pressable>
-                  </View>
-
-                  {!!h.pairing && (
-                    <View style={s.pairPill}>
-                      <Text style={s.pairPillText}>🎧 Only with: {h.pairing}</Text>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 24, paddingTop: 16 }}
+        >
+          {tier === 'hero' &&
+            habits.map((h) => {
+              const isDone = !!h.done[today];
+              const streakCount = streak(h.done);
+              const total = Object.keys(h.done).filter((d) => h.done[d]).length;
+              return (
+                <View key={h.id}>
+                  <View style={s.heroCard}>
+                    <Text style={s.heroSparkleCorner}>✦</Text>
+                    <Text style={s.heroLeafCorner}>🌿</Text>
+                    <View style={s.heroTop}>
+                      <View style={{ width: 40 }} />
+                      <Text style={s.heroName}>{h.label}</Text>
+                      <Pressable onPress={() => openEdit(h)} hitSlop={8} style={{ width: 40 }}>
+                        <Text style={s.heroEdit}>Edit</Text>
+                      </Pressable>
                     </View>
-                  )}
 
-                  <HeroCheck done={isDone} onPress={() => toggleToday(h)} />
-                  <Text style={s.heroCheckLabel}>
-                    {isDone ? 'Done today ✨' : 'Tap the bean when it’s done'}
-                  </Text>
+                    {!!h.pairing && (
+                      <View style={s.pairPill}>
+                        <Text style={s.pairPillText}>🎧 Only with: {h.pairing}</Text>
+                      </View>
+                    )}
 
-                  <View style={s.heroDots}>
-                    {renderDots(h, s.heroDot, s.dotOn)}
-                  </View>
+                    <HeroCheck done={isDone} onPress={() => toggleToday(h)} />
+                    <Text style={s.heroCheckLabel}>
+                      {isDone ? 'Done today ✨' : 'Tap the heart when it’s done'}
+                    </Text>
 
-                  {treatPill(h)}
-                </View>
+                    <VineProgress done={h.done} />
 
-                <View style={s.statsRow}>
-                  <View style={s.statTile}>
-                    <Text style={s.statNum}>{streakCount}</Text>
-                    <Text style={s.statLabel}>day streak 🔥</Text>
-                  </View>
-                  <View style={s.statTile}>
-                    <Text style={s.statNum}>{bestStreak(h.done)}</Text>
-                    <Text style={s.statLabel}>best streak 🏆</Text>
-                  </View>
-                  <View style={s.statTile}>
-                    <Text style={s.statNum}>{total}</Text>
-                    <Text style={s.statLabel}>days done ✅</Text>
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-
-        {tier === 'medium' &&
-          habits.map((h) => {
-            const isDone = !!h.done[today];
-            const streakCount = streak(h.done);
-            return (
-              <View key={h.id} style={s.card}>
-                <Pressable
-                  onPress={() => toggleToday(h)}
-                  hitSlop={8}
-                  style={[s.check, isDone && s.checkOn]}
-                >
-                  {isDone && <Text style={s.checkMark}>✓</Text>}
-                </Pressable>
-                <Pressable style={s.cardBody} onPress={() => openEdit(h)}>
-                  <Text style={[s.cardLabel, isDone && s.cardLabelDone]}>
-                    {h.label}
-                  </Text>
-                  {renderDots(h, s.dot, s.dotOn)}
-                  <View style={s.pillsRow}>
                     {treatPill(h)}
-                    {pairPill(h)}
                   </View>
-                </Pressable>
-                {streakCount > 0 && <Text style={s.streak}>🔥 {streakCount}</Text>}
-              </View>
-            );
-          })}
 
-        {tier === 'compact' &&
-          habits.map((h) => {
-            const isDone = !!h.done[today];
-            const streakCount = streak(h.done);
-            return (
-              <View key={h.id} style={s.cardCompact}>
-                <Pressable
-                  onPress={() => toggleToday(h)}
-                  hitSlop={8}
-                  style={[s.check, isDone && s.checkOn]}
+                  <View style={s.statsRow}>
+                    <View style={s.statTile}>
+                      <Text style={s.statNum}>{streakCount}</Text>
+                      <Text style={s.statLabel}>day streak 🔥</Text>
+                    </View>
+                    <View style={s.statTile}>
+                      <Text style={s.statNum}>{bestStreak(h.done)}</Text>
+                      <Text style={s.statLabel}>best streak 🏆</Text>
+                    </View>
+                    <View style={s.statTile}>
+                      <Text style={s.statNum}>{total}</Text>
+                      <Text style={s.statLabel}>days done ✅</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+
+          {tier === 'list' && (
+            <View style={{ position: 'relative', paddingLeft: 30 }}>
+              <Svg
+                width={22}
+                height={habits.length * 118}
+                viewBox={`0 0 22 ${habits.length * 118}`}
+                style={{ position: 'absolute', left: 0, top: 0 }}
+                preserveAspectRatio="none"
+              >
+                <Path
+                  d={`M11 0 C 20 ${habits.length * 15}, 2 ${habits.length * 30}, 11 ${habits.length * 45} S 20 ${habits.length * 75}, 11 ${habits.length * 90} S 2 ${habits.length * 105}, 11 ${habits.length * 118}`}
+                  fill="none"
+                  stroke="#8FAF6E"
+                  strokeWidth={4}
+                  strokeLinecap="round"
+                />
+              </Svg>
+              {habits.map((h, i) => {
+                const isDone = !!h.done[today];
+                const streakCount = streak(h.done);
+                const days7 = lastNDays(7);
+                return (
+                  <View key={h.id} style={{ marginBottom: 16 }}>
+                    <Text style={s.trellisLeaf}>{isDone ? '🌸' : '🍃'}</Text>
+                    <View style={s.card}>
+                      <HeartCheck done={isDone} onPress={() => toggleToday(h)} />
+                      <Pressable style={s.cardBody} onPress={() => openEdit(h)}>
+                        <Text style={[s.cardLabel, isDone && s.cardLabelDone]}>
+                          {h.label}
+                        </Text>
+                        <View style={s.dotsRow}>
+                          {days7.map((d) => (
+                            <View
+                              key={d}
+                              style={[s.dot, h.done[d] && s.dotOn, d === today && s.dotToday]}
+                            />
+                          ))}
+                        </View>
+                        <View style={s.pillsRow}>
+                          {treatPill(h)}
+                          {!!h.pairing && (
+                            <View style={s.pairPillSmall}>
+                              <Text style={s.pairPillText}>🎧 {h.pairing}</Text>
+                            </View>
+                          )}
+                        </View>
+                      </Pressable>
+                      {streakCount > 0 && <Text style={s.streak}>🔥 {streakCount}</Text>}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {loaded && habits.length === 0 && (
+            <View style={s.unlockCard}>
+              <Image
+                source={require('../assets/mascot/bean-sprout.png')}
+                style={s.unlockMascot}
+                resizeMode="contain"
+              />
+              <Text style={s.unlockTitle}>Plant your first bean</Text>
+              <Text style={s.unlockBody}>
+                Pick a habit so small you can’t say no — and a treat for doing
+                it.
+              </Text>
+              <Pressable onPress={openAdd}>
+                <LinearGradient
+                  colors={['#9BC178', '#6F9E4C']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.unlockBtn}
                 >
-                  {isDone && <Text style={s.checkMark}>✓</Text>}
-                </Pressable>
-                <Pressable style={s.cardBody} onPress={() => openEdit(h)}>
-                  <Text style={[s.cardLabel, isDone && s.cardLabelDone]}>
-                    {h.label}
-                  </Text>
-                  {!!h.reward && (
-                    <Text style={s.compactTreat}>🍬 {h.reward}</Text>
-                  )}
-                </Pressable>
-                {streakCount > 0 && <Text style={s.streak}>🔥 {streakCount}</Text>}
-              </View>
-            );
-          })}
+                  <Text style={s.unlockBtnText}>Plant it</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          )}
 
-        {loaded && habits.length === 0 && (
-          <View style={s.unlockCard}>
-            <Text style={s.unlockTitle}>🫘 Plant your first bean</Text>
-            <Text style={s.unlockBody}>
-              Pick a habit so small you can’t say no — and a treat for doing
-              it.
-            </Text>
-            <Pressable style={s.unlockBtn} onPress={openAdd}>
-              <Text style={s.unlockBtnText}>Plant it</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {suggestAdd && (
-          <View style={s.unlockCard}>
-            <Text style={s.unlockTitle}>✨ Feeling good?</Text>
-            <Text style={s.unlockBody}>
-              You’ve been on a roll lately. If you feel like it, plant one
-              more tiny bean — no pressure at all.
-            </Text>
-            <Pressable style={s.unlockBtn} onPress={openAdd}>
-              <Text style={s.unlockBtnText}>+ Add a habit</Text>
-            </Pressable>
-            <Pressable onPress={dismissSuggest} hitSlop={8}>
-              <Text style={s.notNowText}>Not now</Text>
-            </Pressable>
-          </View>
-        )}
-      </ScrollView>
+          {suggestAdd && (
+            <View style={s.unlockCard}>
+              <Image
+                source={require('../assets/mascot/bean-sprout.png')}
+                style={s.unlockMascot}
+                resizeMode="contain"
+              />
+              <Text style={s.unlockTitle}>Feeling good?</Text>
+              <Text style={s.unlockBody}>
+                You’ve been on a roll lately. If you feel like it, plant one
+                more tiny bean — no pressure at all.
+              </Text>
+              <Pressable onPress={openAdd}>
+                <LinearGradient
+                  colors={['#9BC178', '#6F9E4C']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.unlockBtn}
+                >
+                  <Text style={s.unlockBtnText}>+ Add a habit</Text>
+                </LinearGradient>
+              </Pressable>
+              <Pressable onPress={dismissSuggest} hitSlop={8}>
+                <Text style={s.notNowText}>Not now</Text>
+              </Pressable>
+            </View>
+          )}
+        </ScrollView>
       </View>
 
       {/* Celebration on checking off */}
@@ -400,7 +442,13 @@ export default function HabitsScreen() {
       >
         <View style={s.backdropCenter}>
           <View style={s.celebrateCard}>
-            <Text style={s.celebrateEmoji}>🎉</Text>
+            <Text style={s.confettiA}>🎊</Text>
+            <Text style={s.confettiB}>💛</Text>
+            <Image
+              source={require('../assets/mascot/bean-bubbles.png')}
+              style={s.celebrateMascot}
+              resizeMode="contain"
+            />
             <Text style={s.celebrateTitle}>{celebrating?.label} — done!</Text>
             {celebrating && streak(celebrating.done) > 1 && (
               <Text style={s.celebrateStreak}>
@@ -413,10 +461,17 @@ export default function HabitsScreen() {
                 <Text style={s.celebrateTreat}>🍬 {celebrating.reward}</Text>
               </>
             )}
-            <Pressable style={s.saveBtn} onPress={() => setCelebrating(null)}>
-              <Text style={s.saveBtnText}>
-                {celebrating?.reward ? 'Claim it' : 'Nice!'}
-              </Text>
+            <Pressable onPress={() => setCelebrating(null)}>
+              <LinearGradient
+                colors={['#9BC178', '#6F9E4C']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.saveBtn}
+              >
+                <Text style={s.saveBtnText}>
+                  {celebrating?.reward ? 'Claim it' : 'Nice!'}
+                </Text>
+              </LinearGradient>
             </Pressable>
           </View>
         </View>
@@ -468,8 +523,15 @@ export default function HabitsScreen() {
                 returnKeyType="done"
               />
               {!!formError && <Text style={s.formError}>{formError}</Text>}
-              <Pressable style={s.saveBtn} onPress={saveDraft}>
-                <Text style={s.saveBtnText}>{editing ? 'Save' : 'Add habit'}</Text>
+              <Pressable onPress={saveDraft}>
+                <LinearGradient
+                  colors={['#9BC178', '#6F9E4C']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.saveBtn}
+                >
+                  <Text style={s.saveBtnText}>{editing ? 'Save' : 'Add habit'}</Text>
+                </LinearGradient>
               </Pressable>
               {editing && (
                 <Pressable style={s.deleteBtn} onPress={deleteEditing}>
@@ -485,20 +547,24 @@ export default function HabitsScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#DCEBF4', paddingHorizontal: 20 },
+  screen: { flex: 1, backgroundColor: '#CDE8F3', paddingHorizontal: 20 },
   content: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 26, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
-  subtitle: { fontSize: 14, fontFamily: 'Nunito_600SemiBold', color: '#7E95A6', marginTop: 4 },
+  title: { fontSize: 22, fontFamily: 'Nunito_800ExtraBold', color: '#5B4636' },
+  subtitle: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E9A5E', marginTop: 6 },
 
   // ---- hero (single habit) ----
   heroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    backgroundColor: '#FBEFE3',
+    borderRadius: 32,
     paddingVertical: 26,
     paddingHorizontal: 20,
     alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
+  heroSparkleCorner: { position: 'absolute', top: 16, left: 18, fontSize: 14, color: '#EFC15A' },
+  heroLeafCorner: { position: 'absolute', top: 14, right: 20, fontSize: 20 },
   heroTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -507,9 +573,9 @@ const s = StyleSheet.create({
   },
   heroName: {
     flex: 1,
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: 'Nunito_800ExtraBold',
-    color: '#3A4750',
+    color: '#4A3B2C',
     textAlign: 'center',
   },
   heroEdit: {
@@ -519,100 +585,82 @@ const s = StyleSheet.create({
     textAlign: 'right',
   },
   heroCheck: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     borderWidth: 3,
     borderStyle: 'dashed',
-    borderColor: '#C6D9E5',
-    backgroundColor: '#EAF3F9',
+    borderColor: '#E6D2BE',
+    backgroundColor: '#F6E7D8',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
+    position: 'relative',
   },
   heroCheckOn: {
     backgroundColor: '#7FA35C',
     borderColor: '#7FA35C',
     borderStyle: 'solid',
   },
-  heroCheckMark: { color: '#FFFFFF', fontSize: 44, fontFamily: 'Nunito_800ExtraBold' },
-  heroCheckBean: { fontSize: 42 },
+  heroCheckMark: { color: '#FFFFFF', fontSize: 46, fontFamily: 'Nunito_800ExtraBold' },
+  heroCheckHeart: { color: '#D9A38C', fontSize: 44 },
+  heroSparkleA: { position: 'absolute', top: -10, right: -8, fontSize: 16 },
+  heroSparkleB: { position: 'absolute', bottom: -6, left: -12, fontSize: 14 },
   heroCheckLabel: {
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
-    color: '#7E95A6',
+    color: '#8A6C52',
     marginTop: 10,
   },
-  heroDots: { alignItems: 'center', marginTop: 16, gap: 2 },
-  heroDot: {
-    width: 13,
-    height: 13,
-    borderRadius: 6.5,
-    backgroundColor: '#E0EBF3',
-  },
+  vineRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2, width: '100%' },
+  vineLeaf: { fontSize: 14 },
   statsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   statTile: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 20,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  statNum: { fontSize: 24, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
-  statLabel: { fontSize: 12, fontFamily: 'Nunito_700Bold', color: '#7E95A6', marginTop: 2 },
+  statNum: { fontSize: 22, fontFamily: 'Nunito_800ExtraBold', color: '#4A3B2C' },
+  statLabel: { fontSize: 11, fontFamily: 'Nunito_700Bold', color: '#8A7A68', marginTop: 2 },
 
-  // ---- medium (2-3 habits) ----
+  // ---- trellis list (2+ habits) ----
+  trellisLeaf: { position: 'absolute', left: -30, top: 22, fontSize: 16 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 16,
+    borderRadius: 22,
+    paddingVertical: 14,
     paddingHorizontal: 14,
-    marginBottom: 10,
-  },
-  // ---- compact (4+ habits) ----
-  cardCompact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginBottom: 8,
-  },
-  compactTreat: {
-    fontSize: 13,
-    fontFamily: 'Nunito_600SemiBold',
-    color: '#B26558',
-    marginTop: 3,
   },
 
   check: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 2,
-    borderColor: '#C6D9E5',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#F0EAD8',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  checkOn: { backgroundColor: '#7FA35C', borderColor: '#7FA35C' },
-  checkMark: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
+  checkOn: { backgroundColor: '#7FA35C' },
+  checkGlyph: { fontSize: 19, color: '#B7A88F' },
+  checkGlyphOn: { color: '#FFFFFF' },
   cardBody: { flex: 1 },
-  cardLabel: { fontSize: 17, fontFamily: 'Nunito_700Bold', color: '#3A4750' },
-  cardLabelDone: { color: '#9FB4C2', textDecorationLine: 'line-through' },
+  cardLabel: { fontSize: 16, fontFamily: 'Nunito_700Bold', color: '#4A3B2C' },
+  cardLabelDone: { color: '#B7A88F', textDecorationLine: 'line-through' },
   dotsRow: { flexDirection: 'row', gap: 5, marginTop: 6 },
   dot: {
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    backgroundColor: '#E0EBF3',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EFE6D3',
   },
-  dotOn: { backgroundColor: '#7FA35C' },
-  dotToday: { borderWidth: 1.5, borderColor: '#3A4750' },
-  streak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#DE9159', marginLeft: 8 },
+  dotOn: { backgroundColor: '#8FAF6E' },
+  dotToday: { borderWidth: 1.5, borderColor: '#4A3B2C' },
+  streak: { fontSize: 14, fontFamily: 'Nunito_800ExtraBold', color: '#DE9159', marginLeft: 8 },
 
   pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   treatPill: {
@@ -628,15 +676,22 @@ const s = StyleSheet.create({
     alignSelf: 'flex-start',
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#C6D9E5',
+    borderColor: '#E6D2BE',
     borderRadius: 999,
     paddingVertical: 4,
     paddingHorizontal: 12,
     marginTop: 9,
   },
-  treatPillEmptyText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#7E95A6' },
+  treatPillEmptyText: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A7A68' },
   pairPill: {
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
+    backgroundColor: '#E3EEF6',
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    marginTop: 9,
+  },
+  pairPillSmall: {
     backgroundColor: '#E3EEF6',
     borderRadius: 999,
     paddingVertical: 5,
@@ -647,30 +702,34 @@ const s = StyleSheet.create({
 
   unlockCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 26,
+    padding: 20,
     marginTop: 8,
     alignItems: 'center',
   },
-  unlockTitle: { fontSize: 18, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
+  unlockMascot: { width: 84, height: 84, marginBottom: 4 },
+  unlockTitle: { fontSize: 18, fontFamily: 'Nunito_800ExtraBold', color: '#4A3B2C' },
   unlockBody: {
     fontSize: 14,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#7E95A6',
+    color: '#8A7A68',
     textAlign: 'center',
     marginTop: 6,
     marginBottom: 14,
     lineHeight: 20,
   },
   unlockBtn: {
-    backgroundColor: '#7FA35C',
     borderRadius: 999,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: 13,
+    paddingHorizontal: 26,
+    shadowColor: '#6F9E4C',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
   },
   unlockBtnText: { color: '#FFFFFF', fontSize: 15, fontFamily: 'Nunito_800ExtraBold' },
   notNowText: {
-    color: '#7E95A6',
+    color: '#8A7A68',
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
     paddingVertical: 10,
@@ -679,32 +738,35 @@ const s = StyleSheet.create({
 
   backdropCenter: {
     flex: 1,
-    backgroundColor: 'rgba(38,52,63,0.5)',
+    backgroundColor: 'rgba(74,59,44,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 28,
   },
+  confettiA: { position: 'absolute', top: 14, left: 22, fontSize: 16 },
+  confettiB: { position: 'absolute', top: 8, right: 26, fontSize: 18 },
   celebrateCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 32,
+    padding: 26,
     width: '100%',
     maxWidth: 360,
     alignItems: 'center',
+    position: 'relative',
   },
-  celebrateEmoji: { fontSize: 44 },
+  celebrateMascot: { width: 108, height: 108, marginTop: 4 },
   celebrateTitle: {
     fontSize: 21,
     fontFamily: 'Nunito_800ExtraBold',
-    color: '#3A4750',
+    color: '#4A3B2C',
     textAlign: 'center',
     marginTop: 8,
   },
   celebrateStreak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#DE9159', marginTop: 8 },
   celebrateTreatLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'Nunito_700Bold',
-    color: '#7E95A6',
+    color: '#8A7A68',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginTop: 16,
@@ -712,18 +774,18 @@ const s = StyleSheet.create({
   celebrateTreat: {
     fontSize: 18,
     fontFamily: 'Nunito_700Bold',
-    color: '#3A4750',
+    color: '#4A3B2C',
     textAlign: 'center',
     marginTop: 4,
-    marginBottom: 8,
+    marginBottom: 10,
   },
 
-  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38,52,63,0.5)' },
+  backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(74,59,44,0.5)' },
   backdropFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: '#FCF6EA',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: 20,
     paddingTop: 18,
     maxHeight: '85%',
@@ -737,45 +799,49 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  sheetTitle: { fontSize: 20, fontFamily: 'Nunito_800ExtraBold', color: '#3A4750' },
-  closeX: { fontSize: 20, color: '#7E95A6', fontFamily: 'Nunito_700Bold' },
+  sheetTitle: { fontSize: 19, fontFamily: 'Nunito_800ExtraBold', color: '#4A3B2C' },
+  closeX: { fontSize: 18, color: '#8A7A68', fontFamily: 'Nunito_800ExtraBold' },
 
-  inputLabel: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E95A6', marginBottom: 6 },
+  inputLabel: { fontSize: 13, fontFamily: 'Nunito_700Bold', color: '#8A7A68', marginBottom: 6 },
   inputHelper: {
     fontSize: 13,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#9FB4C2',
+    color: '#B7A88F',
     marginBottom: 8,
     lineHeight: 18,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: '#D7E4EE',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: '#E6D9C4',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
     fontSize: 16,
     fontFamily: 'Nunito_600SemiBold',
-    color: '#3A4750',
+    color: '#4A3B2C',
     marginBottom: 16,
     minHeight: 48,
   },
   formError: {
-    color: '#D96A5B',
+    color: '#C4645A',
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   saveBtn: {
-    backgroundColor: '#7FA35C',
     borderRadius: 999,
-    paddingVertical: 14,
+    paddingVertical: 15,
     alignItems: 'center',
     alignSelf: 'stretch',
     marginTop: 8,
+    shadowColor: '#6F9E4C',
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
   },
   saveBtnText: { color: '#FFFFFF', fontSize: 17, fontFamily: 'Nunito_800ExtraBold' },
   deleteBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  deleteBtnText: { color: '#D96A5B', fontSize: 15, fontFamily: 'Nunito_700Bold' },
+  deleteBtnText: { color: '#C4645A', fontSize: 15, fontFamily: 'Nunito_700Bold' },
 });
