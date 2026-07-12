@@ -21,10 +21,12 @@ import {
   LogEntry,
   Task,
   loadLog,
+  loadPending,
   loadTasks,
   loadTreat,
   onDataChange,
   saveLog,
+  savePending,
   saveTasks,
   saveTreat,
   todayStr,
@@ -193,6 +195,7 @@ export default function WheelScreen() {
     : 0;
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [pending, setPending] = useState<Task[]>([]);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<Task | null>(null);
@@ -209,6 +212,7 @@ export default function WheelScreen() {
   useEffect(() => {
     const reload = () => {
       loadTasks().then(setTasks);
+      loadPending().then(setPending);
       loadLog().then(setLog);
       loadTreat().then(setTreat);
     };
@@ -258,6 +262,27 @@ export default function WheelScreen() {
     setLog(next);
     saveLog(next);
     setResult(null);
+  };
+
+  const updatePending = (next: Task[]) => {
+    setPending(next);
+    savePending(next);
+  };
+
+  // "Later": park the spun task under the wheel instead of forgetting it.
+  const deferResult = () => {
+    if (!result) return;
+    if (!pending.some((p) => p.id === result.id)) {
+      updatePending([...pending, result]);
+    }
+    setResult(null);
+  };
+
+  const finishPending = (task: Task) => {
+    const next = [...log, { label: task.label, date: todayStr() }];
+    setLog(next);
+    saveLog(next);
+    updatePending(pending.filter((p) => p.id !== task.id));
   };
 
   const saveDraft = () => {
@@ -355,9 +380,33 @@ export default function WheelScreen() {
                     : '🍬 Set your reward first'}
                 </Text>
               </Pressable>
-              <Text style={s.spinHint}>
-                {spinning ? 'Where will it land…' : 'Tap the wheel to spin'}
-              </Text>
+              {pending.length > 0 && (
+                <View style={s.pendingWrap}>
+                  {pending.map((t) => (
+                    <View key={t.id} style={s.pendingRow}>
+                      <Text style={s.pendingLabel} numberOfLines={1}>
+                        {t.label}
+                      </Text>
+                      <Pressable
+                        onPress={() => finishPending(t)}
+                        hitSlop={6}
+                        style={s.pendingDone}
+                      >
+                        <Text style={s.pendingDoneText}>✓</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() =>
+                          updatePending(pending.filter((p) => p.id !== t.id))
+                        }
+                        hitSlop={6}
+                        style={s.pendingDelete}
+                      >
+                        <Text style={s.pendingDeleteText}>✕</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
             </>
           )}
         </View>
@@ -379,7 +428,7 @@ export default function WheelScreen() {
             {!!treat.trim() && (
               <Text style={s.treatText}>Then treat yourself: {treat} 🍬</Text>
             )}
-            <Pressable onPress={markDone}>
+            <Pressable onPress={markDone} style={{ alignSelf: 'stretch' }}>
               <LinearGradient
                 colors={['#9BC178', '#6F9E4C']}
                 start={{ x: 0, y: 0 }}
@@ -399,7 +448,7 @@ export default function WheelScreen() {
               >
                 <Text style={s.ghostBtnText}>Spin again</Text>
               </Pressable>
-              <Pressable style={s.ghostBtn} onPress={() => setResult(null)}>
+              <Pressable style={s.ghostBtn} onPress={deferResult}>
                 <Text style={s.ghostBtnText}>Later</Text>
               </Pressable>
             </View>
@@ -571,13 +620,37 @@ const s = StyleSheet.create({
   },
   treatPillText: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#B26558' },
 
-  spinHint: {
-    textAlign: 'center',
-    fontSize: 14,
-    fontFamily: 'Nunito_700Bold',
-    color: '#8A7A68',
-    marginTop: 10,
+  pendingWrap: { alignSelf: 'stretch', paddingHorizontal: 32, marginTop: 4 },
+  pendingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 9,
+    paddingLeft: 16,
+    paddingRight: 9,
+    marginTop: 8,
+    gap: 8,
   },
+  pendingLabel: { flex: 1, fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#4A3B2C' },
+  pendingDone: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#7FA35C',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingDoneText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Nunito_800ExtraBold' },
+  pendingDelete: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F6E7E4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingDeleteText: { color: '#C4645A', fontSize: 15, fontFamily: 'Nunito_800ExtraBold' },
 
   backdropCenter: {
     flex: 1,

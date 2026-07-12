@@ -94,7 +94,7 @@ function VineProgress({ done }: { done: Record<string, boolean> }) {
     <View style={{ marginTop: 18 }}>
       <Svg width="100%" height={40} viewBox="0 0 340 40" preserveAspectRatio="none">
         <Path
-          d="M6 26 Q 30 8, 55 22 T 105 20 T 155 24 T 205 16 T 255 22 T 305 14 T 334 20"
+          d="M6 25 Q 32 9, 60 22 Q 88 33, 116 20 Q 144 9, 172 23 Q 200 33, 228 18 Q 256 8, 284 24 Q 312 32, 334 19"
           fill="none"
           stroke="#B98A63"
           strokeWidth={2.5}
@@ -252,7 +252,7 @@ export default function HabitsScreen() {
       <View style={s.content}>
         <View style={s.header}>
           <Text style={s.title}>
-            {habits.length > 1 ? 'Daily Beans 🌱' : 'Daily Bean 🌱'}
+            {habits.length > 1 ? 'daily beans 🌱' : 'daily bean 🌱'}
           </Text>
         </View>
 
@@ -450,7 +450,7 @@ export default function HabitsScreen() {
                 <Text style={s.celebrateTreat}>🍬 {celebrating.reward}</Text>
               </>
             )}
-            <Pressable onPress={() => setCelebrating(null)}>
+            <Pressable onPress={() => setCelebrating(null)} style={{ alignSelf: 'stretch' }}>
               <LinearGradient
                 colors={['#9BC178', '#6F9E4C']}
                 start={{ x: 0, y: 0 }}

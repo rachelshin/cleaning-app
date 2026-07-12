@@ -13,6 +13,7 @@ export type Habit = {
 export type LogEntry = { label: string; date: string };
 
 const TASKS_KEY = 'spinclean:tasks';
+const PENDING_KEY = 'spinclean:pending';
 const HABITS_KEY = 'spinclean:habits';
 const LOG_KEY = 'spinclean:log';
 const TREAT_KEY = 'spinclean:treat';
@@ -54,6 +55,7 @@ export async function getLocalUpdatedAt(): Promise<number> {
 // Everything that syncs, as one Firestore document.
 export type AppData = {
   tasks: Task[];
+  pending: Task[];
   habits: Habit[];
   log: LogEntry[];
   treat: string;
@@ -64,6 +66,7 @@ export type AppData = {
 export async function collectAllData(): Promise<AppData> {
   return {
     tasks: await loadTasks(),
+    pending: await loadPending(),
     habits: await loadHabits(),
     log: await loadLog(),
     treat: await loadTreat(),
@@ -75,6 +78,7 @@ export async function collectAllData(): Promise<AppData> {
 export async function applyRemoteData(remote: Partial<AppData>) {
   const pairs: [string, string][] = [];
   if (Array.isArray(remote.tasks)) pairs.push([TASKS_KEY, JSON.stringify(remote.tasks)]);
+  if (Array.isArray(remote.pending)) pairs.push([PENDING_KEY, JSON.stringify(remote.pending)]);
   if (Array.isArray(remote.habits)) pairs.push([HABITS_KEY, JSON.stringify(remote.habits)]);
   if (Array.isArray(remote.log)) pairs.push([LOG_KEY, JSON.stringify(remote.log)]);
   if (typeof remote.treat === 'string') pairs.push([TREAT_KEY, remote.treat]);
@@ -152,6 +156,17 @@ export async function loadTasks(): Promise<Task[]> {
 
 export const saveTasks = async (tasks: Task[]) => {
   await AsyncStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+  await touch();
+};
+
+// Tasks the wheel landed on that the user deferred with "Later".
+export async function loadPending(): Promise<Task[]> {
+  const raw = await AsyncStorage.getItem(PENDING_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+export const savePending = async (pending: Task[]) => {
+  await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(pending));
   await touch();
 };
 
