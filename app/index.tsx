@@ -186,8 +186,10 @@ export default function WheelScreen() {
   // useWindowDimensions breaks under static rendering: the server renders
   // width 0 and hydration never repairs the stale SVG size attributes.
   const [wheelBox, setWheelBox] = useState<{ w: number; h: number } | null>(null);
+  // Reserve ~120px of the measured area for the treat pill + hint that
+  // share the flexible space below the wheel.
   const size = wheelBox
-    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 16, 700))
+    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 120, 700))
     : 0;
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -343,19 +345,22 @@ export default function WheelScreen() {
               </View>
             </Pressable>
           )}
+
+          {size > 0 && (
+            <>
+              <Pressable style={s.treatPill} onPress={() => setManageOpen(true)}>
+                <Text style={s.treatPillText}>
+                  {treat.trim()
+                    ? `🍬 Reward: ${treat.trim()}`
+                    : '🍬 Set your reward first'}
+                </Text>
+              </Pressable>
+              <Text style={s.spinHint}>
+                {spinning ? 'Where will it land…' : 'Tap the wheel to spin'}
+              </Text>
+            </>
+          )}
         </View>
-
-        <Pressable style={s.treatPill} onPress={() => setManageOpen(true)}>
-          <Text style={s.treatPillText}>
-            {treat.trim()
-              ? `🍬 Reward: ${treat.trim()}`
-              : '🍬 Set your reward first'}
-          </Text>
-        </Pressable>
-
-        <Text style={s.spinHint}>
-          {spinning ? 'Where will it land…' : 'Tap the wheel to spin'}
-        </Text>
       </View>
 
       {/* Result overlay */}
@@ -562,7 +567,7 @@ const s = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 9,
     paddingHorizontal: 20,
-    marginBottom: 16,
+    marginTop: 22,
   },
   treatPillText: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#B26558' },
 
@@ -571,7 +576,7 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
     color: '#8A7A68',
-    marginBottom: 24,
+    marginTop: 10,
   },
 
   backdropCenter: {
