@@ -92,7 +92,7 @@ function VineProgress({ done }: { done: Record<string, boolean> }) {
   const days = lastNDays(14);
   return (
     <View style={{ marginTop: 18 }}>
-      <Svg width="100%" height={40} viewBox="0 0 340 40">
+      <Svg width="100%" height={40} viewBox="0 0 340 40" preserveAspectRatio="none">
         <Path
           d="M6 26 Q 30 8, 55 22 T 105 20 T 155 24 T 205 16 T 255 22 T 305 14 T 334 20"
           fill="none"
@@ -156,7 +156,6 @@ export default function HabitsScreen() {
   };
 
   const today = todayStr();
-  const doneToday = habits.filter((h) => h.done[today]).length;
   const streaks = habits.map((h) => streak(h.done));
   // Quiet suggestion: only once every habit has held a solid streak, and
   // then only on a random ~30% of days — never announced, never counted
@@ -233,15 +232,6 @@ export default function HabitsScreen() {
     setModalOpen(false);
   };
 
-  const subtitle =
-    habits.length === 0
-      ? 'Every big bean starts as a tiny sprout 🌱'
-      : doneToday === habits.length
-        ? 'All done for today, human bean ✨'
-        : habits.length === 1
-          ? 'One small bean, every day'
-          : `${doneToday} of ${habits.length} beans done today`;
-
   // One habit gets the full hero treatment; cards simplify as more exist.
   const tier: 'hero' | 'list' = habits.length <= 1 ? 'hero' : 'list';
 
@@ -265,7 +255,6 @@ export default function HabitsScreen() {
             {habits.length > 1 ? 'Daily Beans 🌱' : 'Daily Bean 🌱'}
           </Text>
         </View>
-        <Text style={s.subtitle}>{subtitle}</Text>
 
         <ScrollView
           style={{ flex: 1 }}
@@ -551,7 +540,6 @@ const s = StyleSheet.create({
   content: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 22, fontFamily: 'Nunito_800ExtraBold', color: '#5B4636' },
-  subtitle: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E9A5E', marginTop: 6 },
 
   // ---- hero (single habit) ----
   heroCard: {
@@ -564,7 +552,7 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
   heroSparkleCorner: { position: 'absolute', top: 16, left: 18, fontSize: 14, color: '#EFC15A' },
-  heroLeafCorner: { position: 'absolute', top: 14, right: 20, fontSize: 20 },
+  heroLeafCorner: { position: 'absolute', bottom: 18, right: 20, fontSize: 20 },
   heroTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',

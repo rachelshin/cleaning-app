@@ -91,6 +91,19 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
   const hubR = size * 0.09;
   // Radial room a label can occupy: from just outside the hub to the rim.
   const availLen = R * 0.93 - hubR - 10;
+  const sinHalf = Math.sin(rad(per / 2));
+  // Biggest font a layout can use without the text running past the hub
+  // (radial) or crossing the wedge's side borders at its innermost,
+  // narrowest point (lateral). halfH is the text block's half-height in
+  // font-size units: fs/2 for one line, lineOffset + fs/2 for two.
+  const fitFs = (maxLen: number, nLines: number) => {
+    const radial = availLen / (maxLen * 0.54);
+    if (n === 1) return Math.min(baseFontSize, radial);
+    const halfH = nLines === 2 ? 1.12 : 0.5;
+    const lateral =
+      (R * 0.93 * sinHalf - 2) / (halfH + 0.54 * maxLen * sinHalf);
+    return Math.min(baseFontSize, radial, lateral);
+  };
 
   return (
     <Svg width={size} height={size}>
@@ -120,17 +133,15 @@ function WheelFace({ tasks, size }: { tasks: Task[]; size: number }) {
         const angle = flip ? mid + 180 : mid;
         const [lx, ly] = pt(mid, R * 0.93);
         const fill = labelColor(COLORS[i % COLORS.length]);
-        const oneLineFs = availLen / (t.label.length * 0.54);
         let lines = [t.label];
-        let fs = Math.min(baseFontSize, oneLineFs);
-        if (oneLineFs < baseFontSize) {
+        let fs = fitFs(t.label.length, 1);
+        if (fs < baseFontSize) {
           const two = wrapTwoLines(t.label);
           if (two.length === 2) {
-            const maxLen = Math.max(two[0].length, two[1].length);
-            const twoFs = availLen / (maxLen * 0.54);
-            if (twoFs > oneLineFs) {
+            const twoFs = fitFs(Math.max(two[0].length, two[1].length), 2);
+            if (twoFs > fs) {
               lines = two;
-              fs = Math.min(baseFontSize, twoFs);
+              fs = twoFs;
             }
           }
         }
@@ -176,7 +187,7 @@ export default function WheelScreen() {
   // width 0 and hydration never repairs the stale SVG size attributes.
   const [wheelBox, setWheelBox] = useState<{ w: number; h: number } | null>(null);
   const size = wheelBox
-    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 16, 640))
+    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 16, 700))
     : 0;
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -221,13 +232,15 @@ export default function WheelScreen() {
     // Rotation that puts segment idx's center under the top pointer.
     const desired = (360 - (idx + 0.5) * per + 360) % 360;
     const current = ((rotationTotal.current % 360) + 360) % 360;
+    // Lots of turns + a long cubic ease-out: a fast blur at first, then a
+    // slow creep across the last few wedges for anticipation.
     const target =
-      rotationTotal.current + ((desired - current + 360) % 360) + 360 * 5;
+      rotationTotal.current + ((desired - current + 360) % 360) + 360 * 8;
     setSpinning(true);
     setResult(null);
     Animated.timing(rotation, {
       toValue: target,
-      duration: 4200,
+      duration: 6000,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: Platform.OS !== 'web',
     }).start(() => {
@@ -295,11 +308,11 @@ export default function WheelScreen() {
             </Pressable>
           </View>
         </View>
-        <Text style={s.subtitle}>
-          {doneThisWeek > 0
-            ? `✨ ${doneThisWeek} bean${doneThisWeek === 1 ? '' : 's'} earned this week`
-            : "What'll it bean today? Spin to find out 🌿"}
-        </Text>
+        {doneThisWeek > 0 && (
+          <Text style={s.subtitle}>
+            ✨ {doneThisWeek} bean{doneThisWeek === 1 ? '' : 's'} earned this week
+          </Text>
+        )}
 
         <View
           style={s.wheelArea}
@@ -311,21 +324,24 @@ export default function WheelScreen() {
           }}
         >
           {size > 0 && (
-            <View style={{ width: size, height: size }}>
+            <Pressable
+              onPress={spin}
+              disabled={spinning || tasks.length === 0}
+              style={({ pressed }) => [
+                { width: size, height: size },
+                pressed && !spinning && { transform: [{ scale: 0.98 }] },
+              ]}
+            >
               <View style={s.pointer} />
               <Animated.View style={{ transform: [{ rotate: spinDeg }] }}>
                 <WheelFace tasks={tasks} size={size} />
               </Animated.View>
               <View pointerEvents="none" style={[s.hub, { width: size, height: size }]}>
                 <View style={s.hubBadge}>
-                  <Image
-                    source={require('../assets/mascot/bean-avatar.png')}
-                    style={{ width: size * 0.11, height: size * 0.11 }}
-                    resizeMode="contain"
-                  />
+                  <Text style={{ fontSize: size * 0.08 }}>🌱</Text>
                 </View>
               </View>
-            </View>
+            </Pressable>
           )}
         </View>
 
@@ -337,24 +353,9 @@ export default function WheelScreen() {
           </Text>
         </Pressable>
 
-        <Pressable
-          onPress={spin}
-          disabled={spinning || tasks.length === 0}
-          style={({ pressed }) => [
-            s.spinWrap,
-            (pressed || spinning) && { transform: [{ scale: 0.97 }], opacity: 0.9 },
-          ]}
-        >
-          <LinearGradient
-            colors={['#9BC178', '#6F9E4C']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={s.spinBtn}
-          >
-            <Text style={s.spinBtnText}>{spinning ? 'SPINNING…' : 'SPIN'}</Text>
-            <Text style={s.spinSparkle}>✨</Text>
-          </LinearGradient>
-        </Pressable>
+        <Text style={s.spinHint}>
+          {spinning ? 'Where will it land…' : 'Tap the wheel to spin'}
+        </Text>
       </View>
 
       {/* Result overlay */}
@@ -517,10 +518,10 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  avatarImg: { width: 32, height: 32, marginTop: 5 },
+  avatarImg: { width: 42, height: 42, marginTop: 8 },
   subtitle: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E9A5E', marginTop: 6 },
 
-  wheelArea: { alignItems: 'center', justifyContent: 'center', flex: 1 },
+  wheelArea: { alignItems: 'center', justifyContent: 'center', flex: 1, marginHorizontal: -12 },
   pointer: {
     position: 'absolute',
     top: -10,
@@ -565,25 +566,13 @@ const s = StyleSheet.create({
   },
   treatPillText: { fontSize: 15, fontFamily: 'Nunito_700Bold', color: '#B26558' },
 
-  spinWrap: { marginBottom: 24, borderRadius: 999 },
-  spinBtn: {
-    borderRadius: 999,
-    paddingVertical: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    shadowColor: '#6F9E4C',
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
+  spinHint: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontFamily: 'Nunito_700Bold',
+    color: '#8A7A68',
+    marginBottom: 24,
   },
-  spinBtnText: {
-    color: '#FFFFFF',
-    fontSize: 21,
-    fontFamily: 'Nunito_800ExtraBold',
-    letterSpacing: 3,
-  },
-  spinSparkle: { position: 'absolute', top: 10, right: 26, fontSize: 14 },
 
   backdropCenter: {
     flex: 1,
