@@ -188,10 +188,10 @@ export default function WheelScreen() {
   // useWindowDimensions breaks under static rendering: the server renders
   // width 0 and hydration never repairs the stale SVG size attributes.
   const [wheelBox, setWheelBox] = useState<{ w: number; h: number } | null>(null);
-  // Reserve ~120px of the measured area for the treat pill + hint that
-  // share the flexible space below the wheel.
+  // Reserve ~190px of the measured area for the heading above the wheel
+  // and the treat pill below it, which share the flexible space.
   const size = wheelBox
-    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 120, 700))
+    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 190, 700))
     : 0;
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -320,27 +320,6 @@ export default function WheelScreen() {
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
       <Bubbles />
       <View style={s.content}>
-        <View style={s.header}>
-          <Text style={s.title}>clean bean</Text>
-          <View style={s.headerRight}>
-            <Pressable onPress={() => setManageOpen(true)} hitSlop={8}>
-              <Text style={s.headerAction}>Edit tasks</Text>
-            </Pressable>
-            <Pressable onPress={() => setAccountOpen(true)} hitSlop={8} style={s.avatarBtn}>
-              <Image
-                source={require('../assets/mascot/bean-avatar.png')}
-                style={s.avatarImg}
-                resizeMode="contain"
-              />
-            </Pressable>
-          </View>
-        </View>
-        {doneThisWeek > 0 && (
-          <Text style={s.subtitle}>
-            ✨ {doneThisWeek} bean{doneThisWeek === 1 ? '' : 's'} earned this week
-          </Text>
-        )}
-
         <View
           style={s.wheelArea}
           onLayout={(e) => {
@@ -350,6 +329,31 @@ export default function WheelScreen() {
             );
           }}
         >
+          {/* The heading lives inside the centered cluster so it hugs the
+              wheel — leftover space splits above and below the whole group
+              instead of pooling between header and wheel. */}
+          <View style={s.headerBlock}>
+            <View style={s.header}>
+              <Text style={s.title}>clean bean</Text>
+              <View style={s.headerRight}>
+                <Pressable onPress={() => setManageOpen(true)} hitSlop={8}>
+                  <Text style={s.headerAction}>Edit tasks</Text>
+                </Pressable>
+                <Pressable onPress={() => setAccountOpen(true)} hitSlop={8} style={s.avatarBtn}>
+                  <Image
+                    source={require('../assets/mascot/bean-avatar.png')}
+                    style={s.avatarImg}
+                    resizeMode="contain"
+                  />
+                </Pressable>
+              </View>
+            </View>
+            {doneThisWeek > 0 && (
+              <Text style={s.subtitle}>
+                ✨ {doneThisWeek} bean{doneThisWeek === 1 ? '' : 's'} earned this week
+              </Text>
+            )}
+          </View>
           {size > 0 && (
             <Pressable
               onPress={spin}
@@ -576,6 +580,9 @@ const s = StyleSheet.create({
   subtitle: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E9A5E', marginTop: 6 },
 
   wheelArea: { alignItems: 'center', justifyContent: 'center', flex: 1, marginHorizontal: -12 },
+  // Counters wheelArea's negative margin so the heading keeps the same
+  // side alignment it had in the normal content flow.
+  headerBlock: { alignSelf: 'stretch', marginHorizontal: 12, marginBottom: 20 },
   pointer: {
     position: 'absolute',
     top: -10,
