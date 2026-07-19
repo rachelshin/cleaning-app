@@ -9,6 +9,8 @@ export type Habit = {
   // Temptation bundling: one special thing (podcast, candle, playlist…)
   // enjoyed ONLY while doing this habit.
   pairing?: string;
+  // Ripe tomatoes picked (and eaten) from this habit's plant.
+  harvests?: number;
 };
 export type LogEntry = { label: string; date: string };
 

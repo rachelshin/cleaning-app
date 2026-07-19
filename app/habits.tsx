@@ -114,9 +114,12 @@ function TomatoArt() {
 }
 
 // Days 1–3 the bean stays buried (mound only, no visible growth); the
-// sprout breaks ground on day 4, then leaves, a flower, and tomatoes.
+// sprout breaks ground on day 4, then leaves, a flower, and tomatoes on
+// day 21. Picking the ripe tomato drops the plant back to flowering; it
+// fruits again REGROW_DAYS done-days later.
+const FIRST_FRUIT = 21;
+const REGROW_DAYS = 7;
 const PLANT_STAGES: { min: number; Art: ComponentType }[] = [
-  { min: 21, Art: TomatoArt },
   { min: 14, Art: FlowerArt },
   { min: 8, Art: LeafyArt },
   { min: 4, Art: SproutArt },
@@ -140,14 +143,99 @@ function WateringCan() {
   );
 }
 
+// Auto-playing harvest moment: the picked tomato gets three bites taken
+// out of it (with a little squish on each), then the card closes itself.
+// Bites are card-background circles overlaid on the rim so they read as
+// missing chunks.
+function EatingTomato({ onDone }: { onDone: () => void }) {
+  const eat = useRef(new Animated.Value(0)).current;
+  const done = useRef(onDone);
+  done.current = onDone;
+
+  useEffect(() => {
+    const anim = Animated.sequence([
+      Animated.delay(450),
+      Animated.timing(eat, {
+        toValue: 1,
+        duration: 1900,
+        easing: Easing.linear,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.delay(650),
+    ]);
+    anim.start(({ finished }) => {
+      if (finished) done.current();
+    });
+    return () => anim.stop();
+  }, [eat]);
+
+  const scale = eat.interpolate({
+    inputRange: [0, 0.24, 0.27, 0.31, 0.54, 0.57, 0.61, 0.84, 0.87, 0.91, 1],
+    outputRange: [1, 1, 0.93, 1, 1, 0.93, 1, 1, 0.93, 1, 1],
+  });
+
+  const bites = [
+    { at: 0.25, x: 128, y: 40, r: 20 },
+    { at: 0.55, x: 148, y: 82, r: 23 },
+    { at: 0.85, x: 132, y: 126, r: 21 },
+  ];
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Svg width={190} height={190} viewBox="0 0 120 120">
+        <Circle cx={60} cy={68} r={44} fill="#D95F4B" />
+        <Ellipse
+          cx={44}
+          cy={52}
+          rx={10}
+          ry={6}
+          fill="rgba(255,255,255,0.35)"
+          transform="rotate(-24 44 52)"
+        />
+        <Path
+          d="M60 18 C58 22, 58 26, 60 30"
+          stroke="#6F9E4C"
+          strokeWidth={4}
+          strokeLinecap="round"
+          fill="none"
+        />
+        <Path d="M60 30 Q44 24 36 32 Q50 38 60 33 Q70 38 84 32 Q76 24 60 30 Z" fill="#7FA35C" />
+      </Svg>
+      {bites.map((b, i) => (
+        <Animated.View
+          key={i}
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: b.x,
+            top: b.y,
+            opacity: eat.interpolate({
+              inputRange: [0, b.at, b.at + 0.001, 1],
+              outputRange: [0, 0, 1, 1],
+            }),
+          }}
+        >
+          <View style={[s.biteChunk, { width: b.r * 2, height: b.r * 2, borderRadius: b.r }]} />
+          <View style={[s.biteChunk, s.biteNibA]} />
+          <View style={[s.biteChunk, s.biteNibB]} />
+        </Animated.View>
+      ))}
+    </Animated.View>
+  );
+}
+
 function GardenBed({
   totalDone,
+  harvests,
   wateredToday,
   onToggle,
+  onPick,
 }: {
   totalDone: number;
+  harvests: number;
   wateredToday: boolean;
   onToggle: () => void;
+  onPick: () => void;
 }) {
   const pulse = useRef(new Animated.Value(1)).current;
   const tilt = useRef(new Animated.Value(0)).current;
@@ -235,13 +323,26 @@ function GardenBed({
     });
   };
 
-  const stage = PLANT_STAGES.find((p) => totalDone >= p.min);
-  const StageArt = stage?.Art;
+  const fruitReady = totalDone >= FIRST_FRUIT + harvests * REGROW_DAYS;
+  const StageArt = fruitReady
+    ? TomatoArt
+    : totalDone >= FIRST_FRUIT
+      ? FlowerArt
+      : PLANT_STAGES.find((p) => totalDone >= p.min)?.Art;
   const tiltDeg = tilt.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-24deg'] });
 
   return (
     <View style={s.garden}>
-      <View style={s.gardenSky}>{StageArt && <StageArt />}</View>
+      <View style={s.gardenSky}>
+        {StageArt &&
+          (fruitReady ? (
+            <Pressable onPress={onPick} hitSlop={8}>
+              <StageArt />
+            </Pressable>
+          ) : (
+            <StageArt />
+          ))}
+      </View>
       <View style={[s.soil, wateredToday && s.soilWet]} />
       {totalDone >= 1 && totalDone < 4 && <View style={s.mound} />}
 
@@ -330,6 +431,7 @@ export default function HabitsScreen() {
   const [draftPair, setDraftPair] = useState('');
   const [formError, setFormError] = useState('');
   const [celebrating, setCelebrating] = useState<Habit | null>(null);
+  const [eating, setEating] = useState(false);
   const [suggestDismissed, setSuggestDismissed] = useState<string | null>(null);
 
   useEffect(() => {
@@ -376,6 +478,15 @@ export default function HabitsScreen() {
     });
     update(next);
     if (turningOn) setCelebrating(next.find((h) => h.id === habit.id) ?? null);
+  };
+
+  const pickFruit = (habit: Habit) => {
+    update(
+      habits.map((h) =>
+        h.id === habit.id ? { ...h, harvests: (h.harvests ?? 0) + 1 } : h
+      )
+    );
+    setEating(true);
   };
 
   const openAdd = () => {
@@ -480,8 +591,10 @@ export default function HabitsScreen() {
 
                     <GardenBed
                       totalDone={total}
+                      harvests={h.harvests ?? 0}
                       wateredToday={isDone}
                       onToggle={() => toggleToday(h)}
+                      onPick={() => pickFruit(h)}
                     />
                     {isDone && (
                       <Text style={s.heroCheckLabel}>
@@ -660,6 +773,20 @@ export default function HabitsScreen() {
                 </Text>
               </LinearGradient>
             </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Eating the picked tomato */}
+      <Modal
+        visible={eating}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEating(false)}
+      >
+        <View style={s.backdropCenter}>
+          <View style={s.eatCard}>
+            {eating && <EatingTomato onDone={() => setEating(false)} />}
           </View>
         </View>
       </Modal>
@@ -964,6 +1091,17 @@ const s = StyleSheet.create({
     marginTop: 4,
     marginBottom: 10,
   },
+
+  eatCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  biteChunk: { position: 'absolute', backgroundColor: '#FFFFFF' },
+  biteNibA: { width: 18, height: 18, borderRadius: 9, left: -8, top: 20 },
+  biteNibB: { width: 16, height: 16, borderRadius: 8, left: 26, top: -6 },
 
   backdropBottom: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(74,59,44,0.5)' },
   backdropFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
