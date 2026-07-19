@@ -255,8 +255,7 @@ function GardenBed({
 
   // The can rests centered; watering slides it right until the spout is
   // over the plant, tilts it while the shower falls, then brings it home
-  // and marks the day done (which pops the celebration). Tapping again
-  // un-waters instantly.
+  // and marks the day done. Tapping again un-waters instantly.
   const water = () => {
     if (wateredToday) {
       onToggle();
@@ -447,7 +446,6 @@ export default function HabitsScreen() {
   const [draftTreat, setDraftTreat] = useState('');
   const [draftPair, setDraftPair] = useState('');
   const [formError, setFormError] = useState('');
-  const [celebrating, setCelebrating] = useState<Habit | null>(null);
   const [eating, setEating] = useState(false);
   const [suggestDismissed, setSuggestDismissed] = useState<string | null>(null);
 
@@ -485,7 +483,6 @@ export default function HabitsScreen() {
   };
 
   const toggleToday = (habit: Habit) => {
-    const turningOn = !habit.done[today];
     const next = habits.map((h) => {
       if (h.id !== habit.id) return h;
       const done = { ...h.done };
@@ -494,7 +491,6 @@ export default function HabitsScreen() {
       return { ...h, done };
     });
     update(next);
-    if (turningOn) setCelebrating(next.find((h) => h.id === habit.id) ?? null);
   };
 
   const pickFruit = (habit: Habit) => {
@@ -750,50 +746,6 @@ export default function HabitsScreen() {
         </ScrollView>
       </View>
 
-      {/* Celebration on checking off */}
-      <Modal
-        visible={!!celebrating}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCelebrating(null)}
-      >
-        <View style={s.backdropCenter}>
-          <View style={s.celebrateCard}>
-            <Text style={s.confettiA}>🎊</Text>
-            <Text style={s.confettiB}>💛</Text>
-            <Image
-              source={require('../assets/mascot/bean-bubbles.png')}
-              style={s.celebrateMascot}
-              resizeMode="contain"
-            />
-            <Text style={s.celebrateTitle}>{celebrating?.label} — done!</Text>
-            {celebrating && streak(celebrating.done) > 1 && (
-              <Text style={s.celebrateStreak}>
-                🔥 {streak(celebrating.done)} days in a row
-              </Text>
-            )}
-            {!!celebrating?.reward && (
-              <>
-                <Text style={s.celebrateTreatLabel}>Treat yourself</Text>
-                <Text style={s.celebrateTreat}>🍬 {celebrating.reward}</Text>
-              </>
-            )}
-            <Pressable onPress={() => setCelebrating(null)} style={{ alignSelf: 'stretch' }}>
-              <LinearGradient
-                colors={['#9BC178', '#6F9E4C']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={s.saveBtn}
-              >
-                <Text style={s.saveBtnText}>
-                  {celebrating?.reward ? 'Claim it' : 'Nice!'}
-                </Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
       {/* Eating the picked tomato */}
       <Modal
         visible={eating}
@@ -921,7 +873,9 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
   garden: { alignSelf: 'stretch', height: 300, marginTop: 16 },
-  gardenSky: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
+  // Negative margin tucks the stem base under the soil bar (drawn after,
+  // so it paints on top) — otherwise the plant looks like it's floating.
+  gardenSky: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', marginBottom: -10 },
   soil: { height: 24, borderRadius: 12, backgroundColor: '#B08155', alignSelf: 'stretch' },
   soilWet: { backgroundColor: '#8A6647' },
   mound: {
@@ -1072,43 +1026,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     padding: 28,
   },
-  confettiA: { position: 'absolute', top: 14, left: 22, fontSize: 16 },
-  confettiB: { position: 'absolute', top: 8, right: 26, fontSize: 18 },
-  celebrateCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 32,
-    padding: 26,
-    width: '100%',
-    maxWidth: 360,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  celebrateMascot: { width: 108, height: 108, marginTop: 4 },
-  celebrateTitle: {
-    fontSize: 21,
-    fontFamily: 'Nunito_800ExtraBold',
-    color: '#4A3B2C',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  celebrateStreak: { fontSize: 15, fontFamily: 'Nunito_800ExtraBold', color: '#DE9159', marginTop: 8 },
-  celebrateTreatLabel: {
-    fontSize: 12,
-    fontFamily: 'Nunito_700Bold',
-    color: '#8A7A68',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginTop: 16,
-  },
-  celebrateTreat: {
-    fontSize: 18,
-    fontFamily: 'Nunito_700Bold',
-    color: '#4A3B2C',
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 10,
-  },
-
   eatCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 32,
