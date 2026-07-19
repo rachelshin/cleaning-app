@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 import {
   bestStreak,
   dayChance,
@@ -125,23 +125,6 @@ const PLANT_STAGES: { min: number; Art: ComponentType }[] = [
   { min: 4, Art: SproutArt },
 ];
 
-function WateringCan() {
-  return (
-    <Svg width={84} height={63} viewBox="0 0 64 48">
-      <Path d="M22 22 L8 10" stroke="#7FA9C9" strokeWidth={8} strokeLinecap="round" />
-      <Circle cx={7} cy={9} r={5.5} fill="#6E97B8" />
-      <Path
-        d="M30 12 A 9 9 0 0 1 48 12"
-        stroke="#6E97B8"
-        strokeWidth={4.5}
-        fill="none"
-        strokeLinecap="round"
-      />
-      <Rect x={18} y={16} width={32} height={26} rx={8} fill="#7FA9C9" />
-      <Rect x={24} y={21} width={8} height={5} rx={2.5} fill="rgba(255,255,255,0.5)" />
-    </Svg>
-  );
-}
 
 // Auto-playing harvest moment: the picked tomato gets three bites taken
 // out of it (with a little squish on each), then the card closes itself.
@@ -372,7 +355,11 @@ function GardenBed({
         <>
           <Pressable onPress={water} hitSlop={10} style={s.canSpot}>
             <Animated.View style={{ transform: [{ scale: pulse }, { rotate: tiltDeg }] }}>
-              <WateringCan />
+              <Image
+                source={require('../assets/mascot/can.png')}
+                style={{ width: 96, height: 96 }}
+                resizeMode="contain"
+              />
             </Animated.View>
           </Pressable>
           {Array.from({ length: 8 }, (_, i) => (
@@ -383,7 +370,7 @@ function GardenBed({
                 s.droplet,
                 {
                   left: '50%',
-                  marginLeft: -48 + i * 12,
+                  marginLeft: -28 + i * 8,
                   opacity: drops.interpolate({
                     inputRange: [0, 0.02 + i * 0.07, 0.14 + i * 0.07, 0.9, 1],
                     outputRange: [0, 0, 1, 1, 0],
@@ -392,7 +379,7 @@ function GardenBed({
                     {
                       translateY: drops.interpolate({
                         inputRange: [0.02 + i * 0.07, 1],
-                        outputRange: [0, 105],
+                        outputRange: [0, 134],
                         extrapolate: 'clamp',
                       }),
                     },
@@ -903,7 +890,7 @@ const s = StyleSheet.create({
     color: '#8A6C52',
     marginTop: 10,
   },
-  garden: { alignSelf: 'stretch', height: 205, marginTop: 16 },
+  garden: { alignSelf: 'stretch', height: 225, marginTop: 16 },
   gardenSky: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
   soil: { height: 24, borderRadius: 12, backgroundColor: '#B08155', alignSelf: 'stretch' },
   soilWet: { backgroundColor: '#8A6647' },
@@ -917,10 +904,12 @@ const s = StyleSheet.create({
     backgroundColor: '#7A583C',
   },
   beanSpot: { position: 'absolute', alignSelf: 'center', bottom: 20 },
-  canSpot: { position: 'absolute', top: 4, alignSelf: 'center' },
+  // Shifted right so the spout (upper-left of the image) hangs over the
+  // plant at the garden's center.
+  canSpot: { position: 'absolute', top: 0, alignSelf: 'center', transform: [{ translateX: 36 }] },
   droplet: {
     position: 'absolute',
-    top: 62,
+    top: 57,
     width: 6,
     height: 10,
     borderRadius: 5,
