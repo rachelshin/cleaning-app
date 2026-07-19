@@ -222,6 +222,7 @@ function GardenBed({
 }) {
   const pulse = useRef(new Animated.Value(1)).current;
   const tilt = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(0)).current;
   const drops = useRef(new Animated.Value(0)).current;
   const sink = useRef(new Animated.Value(0)).current;
   const busy = useRef(false);
@@ -252,8 +253,10 @@ function GardenBed({
     return () => loop.stop();
   }, [wateredToday, pulse]);
 
-  // Tilt the can and let droplets fall, then mark the day done (which
-  // pops the celebration). Tapping again un-waters instantly.
+  // The can rests centered; watering slides it right until the spout is
+  // over the plant, tilts it while the shower falls, then brings it home
+  // and marks the day done (which pops the celebration). Tapping again
+  // un-waters instantly.
   const water = () => {
     if (wateredToday) {
       onToggle();
@@ -262,25 +265,39 @@ function GardenBed({
     if (busy.current) return;
     busy.current = true;
     drops.setValue(0);
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(tilt, {
+    Animated.sequence([
+      Animated.timing(slide, {
+        toValue: 1,
+        duration: 260,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(tilt, {
+            toValue: 1,
+            duration: 220,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+          Animated.delay(560),
+          Animated.timing(tilt, {
+            toValue: 0,
+            duration: 220,
+            easing: Easing.in(Easing.quad),
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+        ]),
+        Animated.timing(drops, {
           toValue: 1,
-          duration: 220,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.delay(560),
-        Animated.timing(tilt, {
-          toValue: 0,
-          duration: 220,
+          duration: 950,
           easing: Easing.in(Easing.quad),
           useNativeDriver: Platform.OS !== 'web',
         }),
       ]),
-      Animated.timing(drops, {
-        toValue: 1,
-        duration: 950,
+      Animated.timing(slide, {
+        toValue: 0,
+        duration: 260,
         easing: Easing.in(Easing.quad),
         useNativeDriver: Platform.OS !== 'web',
       }),
@@ -354,10 +371,23 @@ function GardenBed({
       ) : (
         <>
           <Pressable onPress={water} hitSlop={10} style={s.canSpot}>
-            <Animated.View style={{ transform: [{ scale: pulse }, { rotate: tiltDeg }] }}>
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    translateX: slide.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 72],
+                    }),
+                  },
+                  { scale: pulse },
+                  { rotate: tiltDeg },
+                ],
+              }}
+            >
               <Image
                 source={require('../assets/mascot/can.png')}
-                style={{ width: 96, height: 96 }}
+                style={{ width: 180, height: 180 }}
                 resizeMode="contain"
               />
             </Animated.View>
@@ -379,7 +409,7 @@ function GardenBed({
                     {
                       translateY: drops.interpolate({
                         inputRange: [0.02 + i * 0.07, 1],
-                        outputRange: [0, 134],
+                        outputRange: [0, 166],
                         extrapolate: 'clamp',
                       }),
                     },
@@ -890,7 +920,7 @@ const s = StyleSheet.create({
     color: '#8A6C52',
     marginTop: 10,
   },
-  garden: { alignSelf: 'stretch', height: 225, marginTop: 16 },
+  garden: { alignSelf: 'stretch', height: 300, marginTop: 16 },
   gardenSky: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
   soil: { height: 24, borderRadius: 12, backgroundColor: '#B08155', alignSelf: 'stretch' },
   soilWet: { backgroundColor: '#8A6647' },
@@ -904,12 +934,10 @@ const s = StyleSheet.create({
     backgroundColor: '#7A583C',
   },
   beanSpot: { position: 'absolute', alignSelf: 'center', bottom: 20 },
-  // Shifted right so the spout (upper-left of the image) hangs over the
-  // plant at the garden's center.
-  canSpot: { position: 'absolute', top: 0, alignSelf: 'center', transform: [{ translateX: 36 }] },
+  canSpot: { position: 'absolute', top: 0, alignSelf: 'center' },
   droplet: {
     position: 'absolute',
-    top: 57,
+    top: 100,
     width: 6,
     height: 10,
     borderRadius: 5,
