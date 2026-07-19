@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
+import { ComponentType, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import {
   bestStreak,
   dayChance,
@@ -34,13 +34,130 @@ import {
 import { useIosPWAKeyboard } from '../lib/useIosPWAKeyboard';
 import Bubbles from '../components/Bubbles';
 
-// The hero card's big button: a heart waiting in a dashed slot, gently
-// pulsing until it's tapped, then a solid green heart with a sparkle burst.
-function HeroCheck({ done, onPress }: { done: boolean; onPress: () => void }) {
-  const pulse = useRef(new Animated.Value(1)).current;
+// The hero card's garden bed. The first-ever completion plants a bean in
+// the soil; every later completion is a tap of the watering can. The plant
+// grows with total days done: mound → sprout → leaves → flower → tomato.
+// Growth never reverses — a missed day just pauses it.
+// All garden art is hand-drawn SVG — no emoji.
+function BeanArt() {
+  return (
+    <Svg width={34} height={26} viewBox="0 0 34 26">
+      <Ellipse cx={17} cy={13} rx={14} ry={9.5} fill="#9C6B45" transform="rotate(-18 17 13)" />
+      <Path
+        d="M9 9 Q13 4.5 20 5"
+        stroke="rgba(255,255,255,0.4)"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        fill="none"
+      />
+    </Svg>
+  );
+}
 
+function SproutArt() {
+  return (
+    <Svg width={64} height={64} viewBox="0 0 64 64">
+      <Path d="M32 62 C32 52, 32 44, 32 34" stroke="#6F9E4C" strokeWidth={4} strokeLinecap="round" fill="none" />
+      <Path d="M32 36 Q18 34 12 20 Q28 20 32 36 Z" fill="#8FAF6E" />
+      <Path d="M32 36 Q46 34 52 20 Q36 20 32 36 Z" fill="#7FA35C" />
+    </Svg>
+  );
+}
+
+function LeafyArt() {
+  return (
+    <Svg width={72} height={88} viewBox="0 0 72 88">
+      <Path d="M36 86 C36 64, 36 38, 36 16" stroke="#6F9E4C" strokeWidth={4.5} strokeLinecap="round" fill="none" />
+      <Path d="M36 62 Q20 60 14 46 Q32 46 36 62 Z" fill="#8FAF6E" />
+      <Path d="M36 62 Q52 60 58 46 Q40 46 36 62 Z" fill="#7FA35C" />
+      <Path d="M36 38 Q22 36 17 24 Q33 24 36 38 Z" fill="#7FA35C" />
+      <Path d="M36 38 Q50 36 55 24 Q39 24 36 38 Z" fill="#8FAF6E" />
+      <Circle cx={36} cy={14} r={5} fill="#8FAF6E" />
+    </Svg>
+  );
+}
+
+function FlowerArt() {
+  return (
+    <Svg width={72} height={100} viewBox="0 0 72 100">
+      <Path d="M36 98 C36 76, 36 52, 36 34" stroke="#6F9E4C" strokeWidth={4.5} strokeLinecap="round" fill="none" />
+      <Path d="M36 74 Q20 72 14 58 Q32 58 36 74 Z" fill="#8FAF6E" />
+      <Path d="M36 74 Q52 72 58 58 Q40 58 36 74 Z" fill="#7FA35C" />
+      <Path d="M36 52 Q22 50 17 38 Q33 38 36 52 Z" fill="#7FA35C" />
+      <Circle cx={36} cy={12} r={8} fill="#F4B8C4" />
+      <Circle cx={46} cy={19} r={8} fill="#F4B8C4" />
+      <Circle cx={42} cy={31} r={8} fill="#F4B8C4" />
+      <Circle cx={30} cy={31} r={8} fill="#F4B8C4" />
+      <Circle cx={26} cy={19} r={8} fill="#F4B8C4" />
+      <Circle cx={36} cy={22} r={7} fill="#F0C86B" />
+    </Svg>
+  );
+}
+
+function TomatoArt() {
+  return (
+    <Svg width={84} height={104} viewBox="0 0 84 104">
+      <Path d="M42 102 C42 80, 42 54, 42 24" stroke="#6F9E4C" strokeWidth={5} strokeLinecap="round" fill="none" />
+      <Path d="M42 64 Q24 62 16 46 Q38 46 42 64 Z" fill="#8FAF6E" />
+      <Path d="M42 64 Q60 62 68 46 Q46 46 42 64 Z" fill="#7FA35C" />
+      <Path d="M42 40 Q26 38 20 24 Q38 24 42 40 Z" fill="#7FA35C" />
+      <Path d="M42 40 Q58 38 64 24 Q46 24 42 40 Z" fill="#8FAF6E" />
+      <Circle cx={42} cy={18} r={6} fill="#8FAF6E" />
+      <Circle cx={28} cy={74} r={10} fill="#D95F4B" />
+      <Circle cx={56} cy={80} r={9} fill="#D95F4B" />
+      <Circle cx={42} cy={88} r={10} fill="#D95F4B" />
+      <Circle cx={28} cy={66} r={2.5} fill="#6F9E4C" />
+      <Circle cx={56} cy={73} r={2.5} fill="#6F9E4C" />
+      <Circle cx={42} cy={80} r={2.5} fill="#6F9E4C" />
+    </Svg>
+  );
+}
+
+// Days 1–3 the bean stays buried (mound only, no visible growth); the
+// sprout breaks ground on day 4, then leaves, a flower, and tomatoes.
+const PLANT_STAGES: { min: number; Art: ComponentType }[] = [
+  { min: 21, Art: TomatoArt },
+  { min: 14, Art: FlowerArt },
+  { min: 8, Art: LeafyArt },
+  { min: 4, Art: SproutArt },
+];
+
+function WateringCan() {
+  return (
+    <Svg width={84} height={63} viewBox="0 0 64 48">
+      <Path d="M22 22 L8 10" stroke="#7FA9C9" strokeWidth={8} strokeLinecap="round" />
+      <Circle cx={7} cy={9} r={5.5} fill="#6E97B8" />
+      <Path
+        d="M30 12 A 9 9 0 0 1 48 12"
+        stroke="#6E97B8"
+        strokeWidth={4.5}
+        fill="none"
+        strokeLinecap="round"
+      />
+      <Rect x={18} y={16} width={32} height={26} rx={8} fill="#7FA9C9" />
+      <Rect x={24} y={21} width={8} height={5} rx={2.5} fill="rgba(255,255,255,0.5)" />
+    </Svg>
+  );
+}
+
+function GardenBed({
+  totalDone,
+  wateredToday,
+  onToggle,
+}: {
+  totalDone: number;
+  wateredToday: boolean;
+  onToggle: () => void;
+}) {
+  const pulse = useRef(new Animated.Value(1)).current;
+  const tilt = useRef(new Animated.Value(0)).current;
+  const drops = useRef(new Animated.Value(0)).current;
+  const sink = useRef(new Animated.Value(0)).current;
+  const busy = useRef(false);
+
+  // The tappable control pulses gently until today's care is done.
   useEffect(() => {
-    if (done) {
+    if (wateredToday) {
       pulse.setValue(1);
       return;
     }
@@ -62,52 +179,129 @@ function HeroCheck({ done, onPress }: { done: boolean; onPress: () => void }) {
     );
     loop.start();
     return () => loop.stop();
-  }, [done, pulse]);
+  }, [wateredToday, pulse]);
+
+  // Tilt the can and let droplets fall, then mark the day done (which
+  // pops the celebration). Tapping again un-waters instantly.
+  const water = () => {
+    if (wateredToday) {
+      onToggle();
+      return;
+    }
+    if (busy.current) return;
+    busy.current = true;
+    drops.setValue(0);
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(tilt, {
+          toValue: 1,
+          duration: 220,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.delay(560),
+        Animated.timing(tilt, {
+          toValue: 0,
+          duration: 220,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]),
+      Animated.timing(drops, {
+        toValue: 1,
+        duration: 950,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    ]).start(() => {
+      busy.current = false;
+      onToggle();
+    });
+  };
+
+  // Day one: the bean sinks into the soil, then counts as done.
+  const plantBean = () => {
+    if (busy.current) return;
+    busy.current = true;
+    Animated.timing(sink, {
+      toValue: 1,
+      duration: 550,
+      easing: Easing.in(Easing.quad),
+      useNativeDriver: Platform.OS !== 'web',
+    }).start(() => {
+      busy.current = false;
+      sink.setValue(0);
+      onToggle();
+    });
+  };
+
+  const stage = PLANT_STAGES.find((p) => totalDone >= p.min);
+  const StageArt = stage?.Art;
+  const tiltDeg = tilt.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-24deg'] });
 
   return (
-    <Pressable onPress={onPress}>
-      <Animated.View
-        style={[
-          s.heroCheck,
-          done && s.heroCheckOn,
-          { transform: [{ scale: pulse }] },
-        ]}
-      >
-        <Text style={done ? s.heroCheckMark : s.heroCheckHeart}>{done ? '♥' : '♡'}</Text>
-        {done && (
-          <>
-            <Text style={s.heroSparkleA}>✨</Text>
-            <Text style={s.heroSparkleB}>✨</Text>
-          </>
-        )}
-      </Animated.View>
-    </Pressable>
-  );
-}
+    <View style={s.garden}>
+      <View style={s.gardenSky}>{StageArt && <StageArt />}</View>
+      <View style={[s.soil, wateredToday && s.soilWet]} />
+      {totalDone >= 1 && totalDone < 4 && <View style={s.mound} />}
 
-// A little vine that grows along the last 14 days: a leaf for every day
-// done, a bare twig for every day missed — so the habit's own history
-// reads as a tiny garden instead of a progress bar.
-function VineProgress({ done }: { done: Record<string, boolean> }) {
-  const days = lastNDays(14);
-  return (
-    <View style={{ marginTop: 18 }}>
-      <Svg width="100%" height={40} viewBox="0 0 340 40" preserveAspectRatio="none">
-        <Path
-          d="M6 25 Q 32 9, 60 22 Q 88 33, 116 20 Q 144 9, 172 23 Q 200 33, 228 18 Q 256 8, 284 24 Q 312 32, 334 19"
-          fill="none"
-          stroke="#B98A63"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-        />
-      </Svg>
-      <View style={s.vineRow}>
-        {days.map((d) => (
-          <Text key={d} style={[s.vineLeaf, { opacity: done[d] ? 1 : 0.3 }]}>
-            {done[d] ? '🍃' : '·'}
-          </Text>
-        ))}
-      </View>
+      {totalDone === 0 ? (
+        <Pressable onPress={plantBean} hitSlop={12} style={s.beanSpot}>
+          <Animated.View
+            style={{
+              transform: [
+                { scale: pulse },
+                {
+                  translateY: sink.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 16],
+                  }),
+                },
+              ],
+              opacity: sink.interpolate({
+                inputRange: [0, 0.7, 1],
+                outputRange: [1, 1, 0],
+              }),
+            }}
+          >
+            <BeanArt />
+          </Animated.View>
+        </Pressable>
+      ) : (
+        <>
+          <Pressable onPress={water} hitSlop={10} style={s.canSpot}>
+            <Animated.View style={{ transform: [{ scale: pulse }, { rotate: tiltDeg }] }}>
+              <WateringCan />
+            </Animated.View>
+          </Pressable>
+          {Array.from({ length: 8 }, (_, i) => (
+            <Animated.View
+              key={i}
+              pointerEvents="none"
+              style={[
+                s.droplet,
+                {
+                  left: '50%',
+                  marginLeft: -48 + i * 12,
+                  opacity: drops.interpolate({
+                    inputRange: [0, 0.02 + i * 0.07, 0.14 + i * 0.07, 0.9, 1],
+                    outputRange: [0, 0, 1, 1, 0],
+                  }),
+                  transform: [
+                    {
+                      translateY: drops.interpolate({
+                        inputRange: [0.02 + i * 0.07, 1],
+                        outputRange: [0, 105],
+                        extrapolate: 'clamp',
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+          ))}
+        </>
+      )}
     </View>
   );
 }
@@ -284,12 +478,16 @@ export default function HabitsScreen() {
                       </View>
                     )}
 
-                    <HeroCheck done={isDone} onPress={() => toggleToday(h)} />
-                    <Text style={s.heroCheckLabel}>
-                      {isDone ? 'Done today ✨' : 'Tap the heart when it’s done'}
-                    </Text>
-
-                    <VineProgress done={h.done} />
+                    <GardenBed
+                      totalDone={total}
+                      wateredToday={isDone}
+                      onToggle={() => toggleToday(h)}
+                    />
+                    {isDone && (
+                      <Text style={s.heroCheckLabel}>
+                        {total <= 1 ? 'Planted today ✨' : 'Watered today ✨'}
+                      </Text>
+                    )}
 
                     {treatPill(h)}
                   </View>
@@ -572,36 +770,35 @@ const s = StyleSheet.create({
     color: '#5E8A44',
     textAlign: 'right',
   },
-  heroCheck: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    borderWidth: 3,
-    borderStyle: 'dashed',
-    borderColor: '#E6D2BE',
-    backgroundColor: '#F6E7D8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    position: 'relative',
-  },
-  heroCheckOn: {
-    backgroundColor: '#7FA35C',
-    borderColor: '#7FA35C',
-    borderStyle: 'solid',
-  },
-  heroCheckMark: { color: '#FFFFFF', fontSize: 46, fontFamily: 'Nunito_800ExtraBold' },
-  heroCheckHeart: { color: '#D9A38C', fontSize: 44 },
-  heroSparkleA: { position: 'absolute', top: -10, right: -8, fontSize: 16 },
-  heroSparkleB: { position: 'absolute', bottom: -6, left: -12, fontSize: 14 },
   heroCheckLabel: {
     fontSize: 14,
     fontFamily: 'Nunito_700Bold',
     color: '#8A6C52',
     marginTop: 10,
   },
-  vineRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2, width: '100%' },
-  vineLeaf: { fontSize: 14 },
+  garden: { alignSelf: 'stretch', height: 205, marginTop: 16 },
+  gardenSky: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 2 },
+  soil: { height: 24, borderRadius: 12, backgroundColor: '#B08155', alignSelf: 'stretch' },
+  soilWet: { backgroundColor: '#8A6647' },
+  mound: {
+    position: 'absolute',
+    alignSelf: 'center',
+    bottom: 16,
+    width: 40,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#7A583C',
+  },
+  beanSpot: { position: 'absolute', alignSelf: 'center', bottom: 20 },
+  canSpot: { position: 'absolute', top: 4, alignSelf: 'center' },
+  droplet: {
+    position: 'absolute',
+    top: 62,
+    width: 6,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#7FB3D6',
+  },
   statsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   statTile: {
     flex: 1,
