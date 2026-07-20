@@ -247,6 +247,17 @@ export function lastNDays(n: number): string[] {
   return out;
 }
 
+// Serenade days: any day with at least one finished wheel task, the bean
+// visits the habit garden and sings to the plant — worth one bonus growth
+// day. Distinct dates cap it at one per day no matter how much got
+// cleaned, and only days from the feature's launch count, so the existing
+// log doesn't retroactively fast-forward the plant.
+export const SING_START = '2026-07-19';
+export function singDays(log: LogEntry[]): number {
+  return new Set(log.filter((e) => e.date >= SING_START).map((e) => e.date))
+    .size;
+}
+
 export function weekCount(log: LogEntry[]): number {
   const week = new Set(lastNDays(7));
   return log.filter((e) => week.has(e.date)).length;

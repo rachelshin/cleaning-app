@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { ComponentType, useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { ComponentType, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -21,10 +22,13 @@ import {
   Habit,
   lastNDays,
   loadHabits,
+  loadLog,
   loadSuggestDismissed,
+  LogEntry,
   onDataChange,
   saveHabits,
   saveSuggestDismissed,
+  singDays,
   streak,
   SUGGEST_AFTER_STREAK,
   SUGGEST_CHANCE,
@@ -37,7 +41,9 @@ import Bubbles from '../components/Bubbles';
 // The hero card's garden bed. The first-ever completion plants a bean in
 // the soil; every later completion is a tap of the watering can. The plant
 // grows with total days done: mound → sprout → leaves → flower → tomato.
-// Growth never reverses — a missed day just pauses it.
+// Growth never reverses — a missed day just pauses it. On days a wheel
+// task got finished, the bean mascot stands in the garden singing to the
+// plant (each such day is a bonus growth day — see singDays in storage).
 // All garden art is hand-drawn SVG — no emoji.
 function BeanArt() {
   return (
@@ -47,6 +53,22 @@ function BeanArt() {
         d="M9 9 Q13 4.5 20 5"
         stroke="rgba(255,255,255,0.4)"
         strokeWidth={2.5}
+        strokeLinecap="round"
+        fill="none"
+      />
+    </Svg>
+  );
+}
+
+function NoteArt() {
+  return (
+    <Svg width={16} height={18} viewBox="0 0 16 18">
+      <Ellipse cx={5} cy={14} rx={3.6} ry={2.8} fill="#5B4636" transform="rotate(-20 5 14)" />
+      <Path d="M8.4 13.5 L8.4 3.5" stroke="#5B4636" strokeWidth={2} strokeLinecap="round" />
+      <Path
+        d="M8.4 3.5 Q12.5 4.6 13.2 8.2"
+        stroke="#5B4636"
+        strokeWidth={2}
         strokeLinecap="round"
         fill="none"
       />
@@ -211,12 +233,14 @@ function GardenBed({
   totalDone,
   harvests,
   wateredToday,
+  singing,
   onToggle,
   onPick,
 }: {
   totalDone: number;
   harvests: number;
   wateredToday: boolean;
+  singing: boolean;
   onToggle: () => void;
   onPick: () => void;
 }) {
@@ -225,7 +249,45 @@ function GardenBed({
   const slide = useRef(new Animated.Value(0)).current;
   const drops = useRef(new Animated.Value(0)).current;
   const sink = useRef(new Animated.Value(0)).current;
+  const sway = useRef(new Animated.Value(0)).current;
+  const notes = useRef(new Animated.Value(0)).current;
   const busy = useRef(false);
+
+  // The serenade: the mascot sways side to side while notes drift up
+  // toward the plant, all day on days a wheel task got finished.
+  useEffect(() => {
+    if (!singing) return;
+    const swayLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sway, {
+          toValue: 1,
+          duration: 650,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(sway, {
+          toValue: 0,
+          duration: 650,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ])
+    );
+    const noteLoop = Animated.loop(
+      Animated.timing(notes, {
+        toValue: 1,
+        duration: 2600,
+        easing: Easing.linear,
+        useNativeDriver: Platform.OS !== 'web',
+      })
+    );
+    swayLoop.start();
+    noteLoop.start();
+    return () => {
+      swayLoop.stop();
+      noteLoop.stop();
+    };
+  }, [singing, sway, notes]);
 
   // The tappable control pulses gently until today's care is done.
   useEffect(() => {
@@ -345,6 +407,58 @@ function GardenBed({
       <View style={[s.soil, wateredToday && s.soilWet]} />
       {totalDone >= 1 && totalDone < 4 && <View style={s.mound} />}
 
+      {singing && totalDone >= 1 && (
+        <View pointerEvents="none" style={s.singerSpot}>
+          {[0, 1, 2].map((i) => {
+            const start = i * 0.3;
+            return (
+              <Animated.View
+                key={i}
+                style={{
+                  position: 'absolute',
+                  top: -12,
+                  left: 14 + i * 22,
+                  opacity: notes.interpolate({
+                    inputRange: [start, start + 0.06, start + 0.34, start + 0.4],
+                    outputRange: [0, 1, 1, 0],
+                    extrapolate: 'clamp',
+                  }),
+                  transform: [
+                    {
+                      translateY: notes.interpolate({
+                        inputRange: [start, start + 0.4],
+                        outputRange: [0, -44],
+                        extrapolate: 'clamp',
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <NoteArt />
+              </Animated.View>
+            );
+          })}
+          <Animated.View
+            style={{
+              transform: [
+                {
+                  rotate: sway.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['-7deg', '7deg'],
+                  }),
+                },
+              ],
+            }}
+          >
+            <Image
+              source={require('../assets/mascot/bean-sprout.png')}
+              style={{ width: 84, height: 84 }}
+              resizeMode="contain"
+            />
+          </Animated.View>
+        </View>
+      )}
+
       {totalDone === 0 ? (
         <Pressable onPress={plantBean} hitSlop={12} style={s.beanSpot}>
           <Animated.View
@@ -448,18 +562,22 @@ export default function HabitsScreen() {
   const [formError, setFormError] = useState('');
   const [eating, setEating] = useState(false);
   const [suggestDismissed, setSuggestDismissed] = useState<string | null>(null);
+  const [log, setLog] = useState<LogEntry[]>([]);
 
-  useEffect(() => {
-    const reload = () => {
-      loadHabits().then((h) => {
-        setHabits(h);
-        setLoaded(true);
-      });
-      loadSuggestDismissed().then(setSuggestDismissed);
-    };
-    reload();
-    return onDataChange(reload); // refresh when sync applies remote data
+  const reload = useCallback(() => {
+    loadHabits().then((h) => {
+      setHabits(h);
+      setLoaded(true);
+    });
+    loadSuggestDismissed().then(setSuggestDismissed);
+    loadLog().then(setLog);
   }, []);
+
+  // Runs on mount and every time the tab regains focus — the screen stays
+  // mounted behind the tab bar, and "Done" on the wheel flips over here
+  // expecting today's serenade to already be visible.
+  useFocusEffect(reload);
+  useEffect(() => onDataChange(reload), [reload]); // sync applied remote data
 
   const update = (next: Habit[]) => {
     setHabits(next);
@@ -468,6 +586,10 @@ export default function HabitsScreen() {
 
   const today = todayStr();
   const streaks = habits.map((h) => streak(h.done));
+  // The serenade: live whenever a wheel task was finished today; every
+  // such day (past ones included) counts as one bonus growth day.
+  const sangToday = log.some((e) => e.date === today);
+  const singBoost = singDays(log);
   // Quiet suggestion: only once every habit has held a solid streak, and
   // then only on a random ~30% of days — never announced, never counted
   // down, so success doesn't look like it earns more work.
@@ -583,6 +705,9 @@ export default function HabitsScreen() {
               const isDone = !!h.done[today];
               const streakCount = streak(h.done);
               const total = Object.keys(h.done).filter((d) => h.done[d]).length;
+              // Serenade days advance the plant's stage, but only once it
+              // exists — and the stat tiles keep counting real habit days.
+              const grown = total === 0 ? 0 : total + singBoost;
               return (
                 <View key={h.id}>
                   <View style={s.heroCard}>
@@ -603,9 +728,10 @@ export default function HabitsScreen() {
                     )}
 
                     <GardenBed
-                      totalDone={total}
+                      totalDone={grown}
                       harvests={h.harvests ?? 0}
                       wateredToday={isDone}
+                      singing={sangToday}
                       onToggle={() => toggleToday(h)}
                       onPick={() => pickFruit(h)}
                     />
@@ -888,6 +1014,8 @@ const s = StyleSheet.create({
     backgroundColor: '#7A583C',
   },
   beanSpot: { position: 'absolute', alignSelf: 'center', bottom: 20 },
+  // Standing at the garden's left edge, feet overlapping the soil bar.
+  singerSpot: { position: 'absolute', left: 16, bottom: 14 },
   canSpot: { position: 'absolute', top: 0, alignSelf: 'center' },
   droplet: {
     position: 'absolute',

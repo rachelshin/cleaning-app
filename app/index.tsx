@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -188,10 +189,10 @@ export default function WheelScreen() {
   // useWindowDimensions breaks under static rendering: the server renders
   // width 0 and hydration never repairs the stale SVG size attributes.
   const [wheelBox, setWheelBox] = useState<{ w: number; h: number } | null>(null);
-  // Reserve ~190px of the measured area for the heading above the wheel
-  // and the treat pill below it, which share the flexible space.
+  // Reserve ~230px of the measured area for the treat pill and the hill
+  // scene that share the space below the wheel.
   const size = wheelBox
-    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 190, 700))
+    ? Math.floor(Math.min(wheelBox.w, wheelBox.h - 230, 700))
     : 0;
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -262,6 +263,8 @@ export default function WheelScreen() {
     setLog(next);
     saveLog(next);
     setResult(null);
+    // Flip to the garden so the serenade this earned is actually seen.
+    router.push('/habits');
   };
 
   const updatePending = (next: Task[]) => {
@@ -320,6 +323,27 @@ export default function WheelScreen() {
     <View style={[s.screen, { paddingTop: insets.top + 12 }]}>
       <Bubbles />
       <View style={s.content}>
+        <View style={s.header}>
+          <Text style={s.title}>clean bean</Text>
+          <View style={s.headerRight}>
+            <Pressable onPress={() => setManageOpen(true)} hitSlop={8}>
+              <Text style={s.headerAction}>Edit tasks</Text>
+            </Pressable>
+            <Pressable onPress={() => setAccountOpen(true)} hitSlop={8} style={s.avatarBtn}>
+              <Image
+                source={require('../assets/mascot/bean-avatar.png')}
+                style={s.avatarImg}
+                resizeMode="contain"
+              />
+            </Pressable>
+          </View>
+        </View>
+        {doneThisWeek > 0 && (
+          <Text style={s.subtitle}>
+            ✨ {doneThisWeek} bean{doneThisWeek === 1 ? '' : 's'} earned this week
+          </Text>
+        )}
+
         <View
           style={s.wheelArea}
           onLayout={(e) => {
@@ -329,31 +353,6 @@ export default function WheelScreen() {
             );
           }}
         >
-          {/* The heading lives inside the centered cluster so it hugs the
-              wheel — leftover space splits above and below the whole group
-              instead of pooling between header and wheel. */}
-          <View style={s.headerBlock}>
-            <View style={s.header}>
-              <Text style={s.title}>clean bean</Text>
-              <View style={s.headerRight}>
-                <Pressable onPress={() => setManageOpen(true)} hitSlop={8}>
-                  <Text style={s.headerAction}>Edit tasks</Text>
-                </Pressable>
-                <Pressable onPress={() => setAccountOpen(true)} hitSlop={8} style={s.avatarBtn}>
-                  <Image
-                    source={require('../assets/mascot/bean-avatar.png')}
-                    style={s.avatarImg}
-                    resizeMode="contain"
-                  />
-                </Pressable>
-              </View>
-            </View>
-            {doneThisWeek > 0 && (
-              <Text style={s.subtitle}>
-                ✨ {doneThisWeek} bean{doneThisWeek === 1 ? '' : 's'} earned this week
-              </Text>
-            )}
-          </View>
           {size > 0 && (
             <Pressable
               onPress={spin}
@@ -413,6 +412,28 @@ export default function WheelScreen() {
               )}
             </>
           )}
+
+          {/* Grassy hill + bean at the foot of the screen. The flex spacer
+              above keeps it pinned to the bottom; as Later rows stack up
+              the spacer collapses first, then the hill (and bean) get
+              pushed down past the screen edge. */}
+          <View style={{ flex: 1 }} />
+          <View style={s.hillWrap} pointerEvents="none">
+            <Svg
+              width="100%"
+              height={78}
+              viewBox="0 0 100 30"
+              preserveAspectRatio="none"
+            >
+              <Path d="M0 30 L0 16 Q 22 4 48 10 T 100 8 L100 30 Z" fill="#9BC178" />
+              <Path d="M0 30 L0 22 Q 30 12 62 17 T 100 15 L100 30 Z" fill="#7FA35C" />
+            </Svg>
+            <Image
+              source={require('../assets/mascot/bean-sprout.png')}
+              style={s.hillBean}
+              resizeMode="contain"
+            />
+          </View>
         </View>
       </View>
 
@@ -579,10 +600,14 @@ const s = StyleSheet.create({
   avatarImg: { width: 42, height: 42, marginTop: 8 },
   subtitle: { fontSize: 14, fontFamily: 'Nunito_700Bold', color: '#7E9A5E', marginTop: 6 },
 
-  wheelArea: { alignItems: 'center', justifyContent: 'center', flex: 1, marginHorizontal: -12 },
-  // Counters wheelArea's negative margin so the heading keeps the same
-  // side alignment it had in the normal content flow.
-  headerBlock: { alignSelf: 'stretch', marginHorizontal: 12, marginBottom: 20 },
+  // Top-aligned: the wheel starts right under the header; the flex spacer
+  // inside pushes the hill scene to the bottom. paddingTop leaves room for
+  // the pointer, which pokes above the wheel.
+  wheelArea: { alignItems: 'center', flex: 1, marginHorizontal: -12, paddingTop: 18 },
+  // -8 cancels the screen padding (20) minus wheelArea's bleed (-12) so
+  // the grass runs edge to edge.
+  hillWrap: { alignSelf: 'stretch', marginHorizontal: -8, height: 110, justifyContent: 'flex-end' },
+  hillBean: { position: 'absolute', width: 92, height: 92, bottom: 30, right: 30 },
   pointer: {
     position: 'absolute',
     top: -10,
